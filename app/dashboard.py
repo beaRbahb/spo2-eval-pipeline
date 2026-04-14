@@ -1,6 +1,6 @@
 """SpO2 AI Eval Pipeline — Streamlit Dashboard.
 
-Four views + interactive pipeline runner.
+Six views + interactive pipeline runner.
 Run: streamlit run app/dashboard.py
 """
 from __future__ import annotations
@@ -13,7 +13,6 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-import plotly.express as px
 
 # Ensure project root is on path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -31,39 +30,15 @@ from src.evals.artifact_handling import evaluate_artifact_handling
 from src.evals.base import EvalResult
 from src.llm_utils import get_tracker, reset_tracker
 from app.components.trace_viewer import plot_trace
-
-# ---------------------------------------------------------------------------
-# Owlet brand palette (matched from owletcare.com)
-# ---------------------------------------------------------------------------
-# Headings / dark text — dusty teal, NOT forest green
-TEAL_DARK = "#2C5F5B"
-# Primary accent — the soft sage-teal from Owlet's logo/buttons
-TEAL_PRIMARY = "#5BA69E"
-# Lighter accent — icon circle backgrounds
-TEAL_LIGHT = "#6BACA4"
-# Muted sage for secondary elements
-SAGE = "#8CBDB7"
-# Very light teal tint for subtle backgrounds
-SAGE_BG = "#E8F1EF"
-# Page background — warm cream (Owlet product page)
-CREAM_BG = "#F7F0EA"
-# Card / content background
-WARM_WHITE = "#FEFCFA"
-# Body text — neutral warm gray
-BODY_TEXT = "#4A5568"
-# Subtle borders
-BORDER = "#E2DDD8"
-# Clinical status colors (kept distinct but warmed)
-URGENT_RED = "#C1565B"
-AMBER = "#D4A054"
-NEUTRAL_GRAY = "#9CA3AF"
-
-# Shared Plotly layout
-PLOTLY_LAYOUT = dict(
-    font=dict(family="Georgia, 'Times New Roman', serif", color=TEAL_DARK, size=13),
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor=WARM_WHITE,
-    margin=dict(l=40, r=20, t=40, b=40),
+from app.theme import (
+    TEAL_DARK, TEAL_PRIMARY, TEAL_LIGHT, SAGE, SAGE_BG,
+    CREAM_BG, WARM_WHITE, BODY_TEXT, MUTED_TEXT, BORDER,
+    URGENT_RED, AMBER, NEUTRAL_GRAY,
+    FONT_HEADING, FONT_BODY,
+    TIER_COLORS, FUNNEL_COLORS, LABEL_COLORS, EVAL_COLORS,
+    URGENCY_COLORS, PLOTLY_LAYOUT, GLOBAL_CSS,
+    section_card, metric_card_html, page_intro_html,
+    urgency_badge_html, detail_row_html,
 )
 
 
@@ -73,164 +48,13 @@ st.set_page_config(
     layout="wide",
 )
 
-# ---------------------------------------------------------------------------
-# Custom CSS — Owlet-inspired theme
-# ---------------------------------------------------------------------------
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap');
-
-/* --- Global --- */
-.stApp {
-    background-color: #F7F0EA;
-}
-
-/* --- Sidebar: warm cream, not dark --- */
-section[data-testid="stSidebar"] {
-    background-color: #FEFCFA;
-    border-right: 1px solid #E2DDD8;
-}
-section[data-testid="stSidebar"] * {
-    color: #2C5F5B !important;
-}
-section[data-testid="stSidebar"] .stSlider label,
-section[data-testid="stSidebar"] .stNumberInput label {
-    color: #6BACA4 !important;
-    font-family: 'DM Sans', sans-serif !important;
-    font-size: 0.85rem !important;
-}
-section[data-testid="stSidebar"] hr {
-    border-color: #E2DDD8 !important;
-}
-
-/* --- Typography: serif headings like Owlet --- */
-h1 {
-    font-family: 'Playfair Display', Georgia, serif !important;
-    color: #2C5F5B !important;
-    font-weight: 600 !important;
-    letter-spacing: -0.01em !important;
-}
-h2, h3 {
-    font-family: 'Playfair Display', Georgia, serif !important;
-    color: #2C5F5B !important;
-    font-weight: 500 !important;
-}
-p, span, div, label, li {
-    font-family: 'DM Sans', system-ui, sans-serif;
-}
-.stCaption, [data-testid="stCaptionContainer"] {
-    color: #7A8B87 !important;
-    font-family: 'DM Sans', sans-serif !important;
-}
-
-/* --- Metric cards: clean white with warm border --- */
-[data-testid="stMetric"] {
-    background: #FEFCFA;
-    border: 1px solid #E2DDD8;
-    border-radius: 14px;
-    padding: 18px 22px;
-    box-shadow: 0 1px 4px rgba(44, 95, 91, 0.04);
-}
-[data-testid="stMetricLabel"] {
-    color: #7A8B87 !important;
-    font-family: 'DM Sans', sans-serif !important;
-    font-size: 0.78rem !important;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-}
-[data-testid="stMetricValue"] {
-    color: #2C5F5B !important;
-    font-family: 'Playfair Display', Georgia, serif !important;
-    font-weight: 600 !important;
-}
-
-/* --- Dataframes --- */
-[data-testid="stDataFrame"] {
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid #E2DDD8;
-}
-
-/* --- Buttons: Owlet teal --- */
-.stButton > button[kind="primary"] {
-    background-color: #5BA69E !important;
-    border-color: #5BA69E !important;
-    border-radius: 8px !important;
-    font-family: 'DM Sans', sans-serif !important;
-    font-weight: 500 !important;
-}
-.stButton > button[kind="primary"]:hover {
-    background-color: #2C5F5B !important;
-}
-.stButton > button {
-    border-radius: 8px !important;
-    font-family: 'DM Sans', sans-serif !important;
-}
-
-/* --- Alerts --- */
-[data-testid="stAlert"] {
-    border-radius: 10px !important;
-}
-
-/* --- Selectbox --- */
-.stSelectbox > div > div {
-    border-radius: 8px !important;
-}
-
-/* --- Expander --- */
-.streamlit-expanderHeader {
-    font-family: 'DM Sans', sans-serif !important;
-    color: #2C5F5B !important;
-}
-
-/* --- Slider: Owlet teal instead of red --- */
-.stSlider [data-baseweb="slider"] div[role="slider"] {
-    background-color: #5BA69E !important;
-    border-color: #5BA69E !important;
-}
-.stSlider [data-baseweb="slider"] [data-testid="stTickBarMin"],
-.stSlider [data-baseweb="slider"] [data-testid="stTickBarMax"] {
-    color: #7A8B87 !important;
-}
-/* Slider track fill */
-div[data-baseweb="slider"] div[role="progressbar"] > div {
-    background-color: #5BA69E !important;
-}
-/* Slider thumb value */
-div[data-baseweb="slider"] div[data-testid="stThumbValue"] {
-    color: #5BA69E !important;
-}
-
-/* --- Radio buttons: teal accent --- */
-.stRadio [data-testid="stMarkdownContainer"] {
-    font-family: 'DM Sans', sans-serif !important;
-}
-div[data-baseweb="radio"] label span[data-testid] {
-    color: #5BA69E !important;
-}
-/* Override the default Streamlit red primary color */
-:root {
-    --primary-color: #5BA69E;
-}
-.st-emotion-cache-1gulkj5 {
-    background-color: #5BA69E !important;
-}
-/* Radio dot fill */
-div[role="radiogroup"] label div[data-checked="true"] {
-    background-color: #5BA69E !important;
-    border-color: #5BA69E !important;
-}
-/* Generic primary color overrides */
-[data-testid="stWidgetLabel"] {
-    font-family: 'DM Sans', sans-serif !important;
-}
-</style>
-""", unsafe_allow_html=True)
-
+# Inject global CSS from theme
+st.markdown(GLOBAL_CSS, unsafe_allow_html=True)
 
 # Header
 st.markdown(
-    '<h1 style="margin-bottom: 2px; font-size: 2rem;">Neonatal SpO2 AI Eval Pipeline</h1>',
+    f'<h1 style="margin-bottom: 2px; font-size: 2rem;">Neonatal SpO2 '
+    f'<em style="font-style:italic;">AI Eval</em> Pipeline</h1>',
     unsafe_allow_html=True,
 )
 st.caption("Portfolio demo — synthetic data, multi-tier triage, LLM evals")
@@ -305,8 +129,9 @@ def _run_evals_mock(traces, final_labels, handoffs_map, seed=42):
 # ---------------------------------------------------------------------------
 
 st.sidebar.markdown(
-    '<p style="font-family: Playfair Display, Georgia, serif; font-size:1.3rem; '
-    'font-weight:600; color:#2C5F5B !important; margin-bottom:2px;">SpO2 Pipeline</p>',
+    f'<p style="font-family: {FONT_HEADING}; font-size:1.3rem; '
+    f'font-weight:600; color:{TEAL_DARK} !important; margin-bottom:2px;">'
+    f'SpO2 Pipeline</p>',
     unsafe_allow_html=True,
 )
 st.sidebar.caption("Neonatal monitoring demo")
@@ -317,6 +142,7 @@ page = st.sidebar.radio("View", [
     "Eval Scores",
     "Sample Handoffs",
     "Run Single Trace",
+    "Design System",
 ])
 
 st.sidebar.markdown("---")
@@ -349,17 +175,40 @@ if page == "Pipeline Overview":
     t2 = sum(1 for r in tier2_results if r.routed_to == "auto")
     eq = len(expert_results)
 
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Total Traces", total)
-    col2.metric("Tier 1 (Rules)", f"{t1} ({t1/total*100:.0f}%)")
-    col3.metric("Tier 2 (ML)", f"{t2} ({t2/total*100:.0f}%)")
-    col4.metric("Expert Queue", f"{eq} ({eq/total*100:.0f}%)")
+    # Compute accuracy for the intro
+    t1_correct = sum(1 for r in tier1_results if r.auto_labeled and r.label == r.ground_truth)
+    t1_acc = t1_correct / t1 * 100 if t1 else 0
 
-    # Two-column layout: accuracy chart + pie chart
+    st.markdown(page_intro_html(
+        f"Three-tier triage system processed <strong>{total}</strong> overnight SpO2 traces. "
+        f"Rules auto-labeled {t1/total*100:.0f}% of traces at {t1_acc:.0f}% accuracy, "
+        f"the classifier handled {t2/total*100:.0f}%, and {eq/total*100:.0f}% routed to expert review."
+    ), unsafe_allow_html=True)
+
+    # Custom metric cards with accent bars
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.markdown(metric_card_html("Total Traces", str(total),
+                    accent_color=TEAL_DARK), unsafe_allow_html=True)
+    with col2:
+        st.markdown(metric_card_html("Tier 1 (Rules)", f"{t1}",
+                    accent_color=TEAL_PRIMARY,
+                    delta=f"{t1/total*100:.0f}% of total"), unsafe_allow_html=True)
+    with col3:
+        st.markdown(metric_card_html("Tier 2 (ML)", f"{t2}",
+                    accent_color=SAGE,
+                    delta=f"{t2/total*100:.0f}% of total"), unsafe_allow_html=True)
+    with col4:
+        st.markdown(metric_card_html("Expert Queue", f"{eq}",
+                    accent_color=AMBER,
+                    delta=f"{eq/total*100:.0f}% of total"), unsafe_allow_html=True)
+
+    st.markdown('<div style="height:12px;"></div>', unsafe_allow_html=True)
+
+    # Two-column layout: accuracy chart + pie chart, wrapped in section cards
     left_col, right_col = st.columns(2)
 
     with left_col:
-        st.subheader("Accuracy by Tier")
         tier_data = []
         for r in tier1_results:
             if r.auto_labeled:
@@ -380,56 +229,86 @@ if page == "Pipeline Overview":
                 x=acc["Accuracy"],
                 y=acc["Tier"],
                 orientation="h",
-                marker_color=[TEAL_PRIMARY, SAGE, AMBER],
+                marker=dict(
+                    color=TIER_COLORS,
+                    line=dict(width=0),
+                ),
                 text=[f"{v:.1f}%" for v in acc["Accuracy"]],
                 textposition="auto",
-                textfont=dict(color="white", size=13, family="DM Sans, sans-serif"),
+                textfont=dict(color="white", size=14, family=FONT_BODY),
             ))
             fig_acc.update_layout(
                 **PLOTLY_LAYOUT,
-                height=250,
-                xaxis=dict(range=[0, 105], title="Accuracy (%)", gridcolor=BORDER),
-                yaxis=dict(autorange="reversed"),
+                title=dict(text="Accuracy by Tier", font=dict(
+                    family=FONT_HEADING, size=16, color=TEAL_DARK)),
+                height=240,
+                xaxis=dict(range=[0, 105], title="", gridcolor=BORDER,
+                           showline=False, zeroline=False),
+                yaxis=dict(autorange="reversed", showgrid=False),
                 showlegend=False,
             )
-            st.plotly_chart(fig_acc, use_container_width=True)
+            st.plotly_chart(fig_acc, use_container_width=True, key="acc_chart")
 
     with right_col:
-        st.subheader("Ground Truth Distribution")
         gt_counts = Counter(t.ground_truth_label for t in traces)
         label_order = ["normal", "borderline", "urgent", "artifact"]
         ordered_labels = [l for l in label_order if l in gt_counts]
-        label_colors = {
-            "normal": TEAL_LIGHT, "borderline": AMBER,
-            "urgent": URGENT_RED, "artifact": NEUTRAL_GRAY,
-        }
 
         fig_pie = go.Figure(go.Pie(
-            labels=ordered_labels,
+            labels=[l.capitalize() for l in ordered_labels],
             values=[gt_counts[l] for l in ordered_labels],
             marker=dict(
-                colors=[label_colors[l] for l in ordered_labels],
+                colors=[LABEL_COLORS[l] for l in ordered_labels],
                 line=dict(color=WARM_WHITE, width=2),
             ),
-            hole=0.45,
-            textinfo="label+percent",
-            textfont=dict(size=12, family="DM Sans, sans-serif", color=TEAL_DARK),
+            hole=0.5,
+            textinfo="percent",
+            textfont=dict(size=13, family=FONT_BODY, color="white"),
             hoverinfo="label+value+percent",
         ))
-        fig_pie.update_layout(**PLOTLY_LAYOUT, height=300, showlegend=False)
-        st.plotly_chart(fig_pie, use_container_width=True)
+        fig_pie.update_layout(
+            **PLOTLY_LAYOUT,
+            title=dict(text="Ground Truth Distribution", font=dict(
+                family=FONT_HEADING, size=16, color=TEAL_DARK)),
+            height=340,
+            showlegend=True,
+            legend=dict(
+                orientation="h", yanchor="top", y=-0.05, xanchor="center", x=0.5,
+                font=dict(family=FONT_BODY, size=12, color=TEAL_DARK),
+            ),
+            annotations=[dict(
+                text=f"<b>{total}</b><br><span style='font-size:11px'>traces</span>",
+                x=0.5, y=0.5, font=dict(size=18, color=TEAL_DARK, family=FONT_HEADING),
+                showarrow=False,
+            )],
+        )
+        st.plotly_chart(fig_pie, use_container_width=True, key="pie_chart")
 
-    # Coverage funnel
-    st.subheader("Triage Funnel")
+    # Coverage funnel in a section card
+    st.markdown(f"""
+    <div style="background:{WARM_WHITE}; border:1px solid {BORDER};
+    border-radius:14px; padding:24px; margin-top:4px;
+    box-shadow:0 1px 6px rgba(44,95,91,0.05);">
+    <div style="font-family:{FONT_HEADING}; color:{TEAL_DARK};
+    font-weight:500; font-size:1.15rem; margin-bottom:4px;">Triage Funnel</div>
+    <div style="color:{MUTED_TEXT}; font-size:0.8rem; margin-bottom:12px;
+    font-family:{FONT_BODY};">How traces flow through the three classification tiers</div>
+    <div style="border-bottom:1px solid {BORDER}; margin-bottom:16px;"></div>
+    """, unsafe_allow_html=True)
+
     fig_funnel = go.Figure(go.Funnel(
         y=["All Traces", "Tier 1 Auto-labeled", "Tier 2 Auto-labeled", "Expert Queue"],
         x=[total, t1, t2, eq],
-        marker=dict(color=[TEAL_DARK, TEAL_PRIMARY, SAGE, AMBER]),
+        marker=dict(color=FUNNEL_COLORS),
         textinfo="value+percent initial",
-        textfont=dict(family="DM Sans, sans-serif", size=13),
+        textfont=dict(family=FONT_BODY, size=14),
+        connector=dict(line=dict(color=BORDER)),
     ))
-    fig_funnel.update_layout(**PLOTLY_LAYOUT, height=260)
-    st.plotly_chart(fig_funnel, use_container_width=True)
+    funnel_layout = {k: v for k, v in PLOTLY_LAYOUT.items() if k != "margin"}
+    fig_funnel.update_layout(**funnel_layout, height=240,
+                             margin=dict(l=20, r=20, t=10, b=20))
+    st.plotly_chart(fig_funnel, use_container_width=True, key="funnel_chart")
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
@@ -444,17 +323,34 @@ elif page == "Pre-Annotation Coverage":
     t2 = sum(1 for r in tier2_results if r.routed_to == "auto")
     eq = len(expert_results)
 
-    # Metric cards
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Tier 1 (Rules)", f"{t1} traces", f"{t1/total*100:.0f}% of total")
-    col2.metric("Tier 2 (ML)", f"{t2} traces", f"{t2/total*100:.0f}% of total")
-    col3.metric("Expert Queue", f"{eq} traces", f"{eq/total*100:.0f}% of total")
+    st.markdown(page_intro_html(
+        f"The three-tier system achieves <strong>{(t1+t2)/total*100:.0f}%</strong> "
+        f"auto-annotation coverage, with only <strong>{eq/total*100:.0f}%</strong> "
+        f"requiring expert review."
+    ), unsafe_allow_html=True)
 
-    # Stacked bar
+    # Metric cards with accent bars
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown(metric_card_html("Tier 1 (Rules)", f"{t1} traces",
+                    accent_color=TEAL_PRIMARY,
+                    delta=f"{t1/total*100:.0f}% of total"), unsafe_allow_html=True)
+    with col2:
+        st.markdown(metric_card_html("Tier 2 (ML)", f"{t2} traces",
+                    accent_color=SAGE,
+                    delta=f"{t2/total*100:.0f}% of total"), unsafe_allow_html=True)
+    with col3:
+        st.markdown(metric_card_html("Expert Queue", f"{eq} traces",
+                    accent_color=AMBER,
+                    delta=f"{eq/total*100:.0f}% of total"), unsafe_allow_html=True)
+
+    st.markdown('<div style="height:12px;"></div>', unsafe_allow_html=True)
+
+    # Stacked bar in section card
     fig = go.Figure()
     fig.add_trace(go.Bar(
         name="Tier 1 (Rules)", x=["Coverage"], y=[t1],
-        marker_color=TEAL_MID, text=[t1], textposition="inside",
+        marker_color=TEAL_PRIMARY, text=[t1], textposition="inside",
         textfont=dict(color="white", size=14),
     ))
     fig.add_trace(go.Bar(
@@ -468,14 +364,16 @@ elif page == "Pre-Annotation Coverage":
         textfont=dict(color="white", size=14),
     ))
     fig.update_layout(
-        **PLOTLY_LAYOUT, barmode="stack", height=300,
+        **PLOTLY_LAYOUT, barmode="stack", height=280,
+        title=dict(text="Coverage Stack", font=dict(
+            family=FONT_HEADING, size=16, color=TEAL_DARK)),
         yaxis_title="Traces", xaxis=dict(showticklabels=False),
-        legend=dict(orientation="h", yanchor="bottom", y=1.05),
+        legend=dict(orientation="h", yanchor="bottom", y=1.05,
+                    font=dict(family=FONT_BODY, size=12)),
     )
     st.plotly_chart(fig, use_container_width=True)
 
     # Breakdown by ground truth label x tier
-    st.subheader("Breakdown by Pattern Type")
     rows = []
     for r in tier1_results:
         if r.auto_labeled:
@@ -488,14 +386,11 @@ elif page == "Pre-Annotation Coverage":
 
     if rows:
         breakdown = pd.DataFrame(rows)
-
-        # Grouped bar chart instead of raw crosstab
         ct = pd.crosstab(breakdown["Ground Truth"], breakdown["Tier"])
         tier_order = ["Tier 1", "Tier 2", "Expert"]
-        tier_colors_list = [TEAL_MID, SAGE, AMBER]
 
         fig_bt = go.Figure()
-        for tier, color in zip(tier_order, tier_colors_list):
+        for tier, color in zip(tier_order, TIER_COLORS):
             if tier in ct.columns:
                 fig_bt.add_trace(go.Bar(
                     name=tier, x=ct.index, y=ct[tier],
@@ -503,8 +398,11 @@ elif page == "Pre-Annotation Coverage":
                 ))
         fig_bt.update_layout(
             **PLOTLY_LAYOUT, barmode="group", height=350,
+            title=dict(text="Breakdown by Pattern Type", font=dict(
+                family=FONT_HEADING, size=16, color=TEAL_DARK)),
             yaxis_title="Traces", xaxis_title="Ground Truth Label",
-            legend=dict(orientation="h", yanchor="bottom", y=1.05),
+            legend=dict(orientation="h", yanchor="bottom", y=1.05,
+                        font=dict(family=FONT_BODY, size=12)),
         )
         st.plotly_chart(fig_bt, use_container_width=True)
 
@@ -515,15 +413,26 @@ elif page == "Pre-Annotation Coverage":
 
 elif page == "Rule Discovery":
     st.header("Discovered Rules")
-    st.caption(f"{len(candidate_rules)} candidate rules from decision tree + Apriori mining")
 
     # Split by source
     tree_rules = [r for r in candidate_rules if r.source == "decision_tree"]
     apriori_rules = [r for r in candidate_rules if r.source == "apriori"]
 
+    st.markdown(page_intro_html(
+        f"Pattern mining discovered <strong>{len(candidate_rules)}</strong> candidate rules "
+        f"from decision tree splitting ({len(tree_rules)} rules) and Apriori association mining "
+        f"({len(apriori_rules)} rules). These rules explain how features map to clinical labels."
+    ), unsafe_allow_html=True)
+
     col1, col2 = st.columns(2)
-    col1.metric("Decision Tree Rules", len(tree_rules))
-    col2.metric("Apriori Rules", len(apriori_rules))
+    with col1:
+        st.markdown(metric_card_html("Decision Tree Rules", str(len(tree_rules)),
+                    accent_color=TEAL_PRIMARY), unsafe_allow_html=True)
+    with col2:
+        st.markdown(metric_card_html("Apriori Rules", str(len(apriori_rules)),
+                    accent_color=SAGE), unsafe_allow_html=True)
+
+    st.markdown('<div style="height:12px;"></div>', unsafe_allow_html=True)
 
     if candidate_rules:
         rules_df = pd.DataFrame([
@@ -553,12 +462,12 @@ elif page == "Rule Discovery":
                 x=feat_imp["Importance"],
                 y=feat_imp["Feature"],
                 orientation="h",
-                marker_color=TEAL_MID,
+                marker_color=TEAL_PRIMARY,
             ))
             fig.update_layout(
                 **PLOTLY_LAYOUT,
                 height=max(280, len(feat_imp) * 35),
-                xaxis=dict(title="Importance", gridcolor="#E5E7EB"),
+                xaxis=dict(title="Importance", gridcolor=BORDER),
             )
             st.plotly_chart(fig, use_container_width=True)
 
@@ -569,7 +478,6 @@ elif page == "Rule Discovery":
 
 elif page == "Eval Scores":
     st.header("LLM Evaluator Scores")
-    st.caption("Mock evaluators — switch to live mode for real Claude judgments")
 
     eval_results = _run_evals_mock(traces, final_labels, handoffs_map, seed=int(seed))
 
@@ -585,7 +493,15 @@ elif page == "Eval Scores":
         ).reset_index()
         pass_rates.columns = ["Evaluator", "Pass Rate (%)"]
 
-        # Metric cards with nice labels
+        overall_pass = eval_df["Answer"].eq("Pass").mean() * 100
+        st.markdown(page_intro_html(
+            f"Three LLM-as-judge evaluators assessed <strong>{len(eval_results)}</strong> "
+            f"results across clinical accuracy, handoff quality, and artifact handling. "
+            f"Overall pass rate: <strong>{overall_pass:.1f}%</strong>. "
+            f"<em>Mock mode — switch to live for real Claude judgments.</em>"
+        ), unsafe_allow_html=True)
+
+        # Metric cards with accent bars
         pretty_names = {
             "artifact_handling": "Artifact Handling",
             "clinical_accuracy": "Clinical Accuracy",
@@ -596,26 +512,35 @@ elif page == "Eval Scores":
             col = [col1, col2, col3][i]
             name = pretty_names.get(row["Evaluator"], row["Evaluator"])
             pct = row["Pass Rate (%)"]
-            col.metric(name, f"{pct:.1f}%")
+            color = EVAL_COLORS[i % len(EVAL_COLORS)]
+            with col:
+                st.markdown(metric_card_html(name, f"{pct:.1f}%",
+                            accent_color=color,
+                            delta=f"{int(eval_df[eval_df['Evaluator']==row['Evaluator']].shape[0])} evaluations"),
+                            unsafe_allow_html=True)
+
+        st.markdown('<div style="height:12px;"></div>', unsafe_allow_html=True)
 
         # Gauge-style bar chart
-        eval_colors = [TEAL_MID, SAGE, AMBER]
         fig = go.Figure()
         for i, (_, row) in enumerate(pass_rates.iterrows()):
             name = pretty_names.get(row["Evaluator"], row["Evaluator"])
             fig.add_trace(go.Bar(
                 x=[row["Pass Rate (%)"]], y=[name],
                 orientation="h", name=name,
-                marker_color=eval_colors[i % len(eval_colors)],
+                marker_color=EVAL_COLORS[i % len(EVAL_COLORS)],
                 text=[f"{row['Pass Rate (%)']:.1f}%"],
                 textposition="auto",
-                textfont=dict(color="white", size=13),
+                textfont=dict(color="white", size=14, family=FONT_BODY),
             ))
         fig.update_layout(
             **PLOTLY_LAYOUT, height=220,
-            xaxis=dict(range=[0, 105], title="Pass Rate (%)", gridcolor="#E5E7EB"),
+            title=dict(text="Pass Rates by Evaluator", font=dict(
+                family=FONT_HEADING, size=16, color=TEAL_DARK)),
+            xaxis=dict(range=[0, 105], title="", gridcolor=BORDER,
+                       showline=False, zeroline=False),
             showlegend=False,
-            yaxis=dict(autorange="reversed"),
+            yaxis=dict(autorange="reversed", showgrid=False),
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -630,6 +555,12 @@ elif page == "Eval Scores":
 
 elif page == "Sample Handoffs":
     st.header("Sample Nurse Handoffs")
+
+    st.markdown(page_intro_html(
+        "Each trace generates a structured handoff summary for clinical staff, "
+        "including urgency level, key findings, and patient context. "
+        "Select a pattern type to see how the pipeline handles different clinical scenarios."
+    ), unsafe_allow_html=True)
 
     # Pick sample traces (one per label)
     label_samples = {}
@@ -657,19 +588,7 @@ elif page == "Sample Handoffs":
         st.subheader("Pipeline Handoff")
         handoff = handoffs_map.get(trace.night_id)
         if handoff:
-            # Color-coded urgency badge
-            urgency_colors = {
-                "URGENT": URGENT_RED, "MONITOR": AMBER,
-                "ROUTINE": TEAL_MID, "ARTIFACT REVIEW": NEUTRAL_GRAY,
-            }
-            badge_color = urgency_colors.get(handoff.urgency_level, TEAL_LIGHT)
-            st.markdown(
-                f'<div style="display:inline-block; background:{badge_color}; '
-                f'color:white; padding:6px 16px; border-radius:20px; '
-                f'font-weight:600; font-size:0.85rem; letter-spacing:0.05em;">'
-                f'{handoff.urgency_level}</div>',
-                unsafe_allow_html=True,
-            )
+            st.markdown(urgency_badge_html(handoff.urgency_level), unsafe_allow_html=True)
             st.write("")
             st.write(handoff.summary_text)
             st.caption(f"Source: {handoff.source} | Triage: {final_label} via {source}")
@@ -689,13 +608,7 @@ elif page == "Sample Handoffs":
             "Events": len(trace.events),
         }
         for k, v in details.items():
-            st.markdown(
-                f'<div style="display:flex; justify-content:space-between; '
-                f'padding:4px 0; border-bottom:1px solid #E5E7EB;">'
-                f'<span style="color:{TEAL_LIGHT}; font-size:0.85rem;">{k}</span>'
-                f'<span style="color:{TEAL_DARK}; font-weight:500; font-size:0.85rem;">{v}</span>'
-                f'</div>', unsafe_allow_html=True,
-            )
+            st.markdown(detail_row_html(k, str(v)), unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
@@ -704,7 +617,12 @@ elif page == "Sample Handoffs":
 
 elif page == "Run Single Trace":
     st.header("Interactive Single-Trace Demo")
-    st.caption("Generate a trace, run it through rules, and see the handoff + evals")
+
+    st.markdown(page_intro_html(
+        "Generate a synthetic overnight SpO2 trace with custom parameters, "
+        "run it through the rule engine, and see the classification, handoff, "
+        "and evaluator results in real time."
+    ), unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns([2, 2, 1])
     with col1:
@@ -755,18 +673,7 @@ elif page == "Run Single Trace":
         with col3:
             st.subheader("Handoff")
             handoff = generate_handoff(trace, final_label, use_llm=False)
-            urgency_colors = {
-                "URGENT": URGENT_RED, "MONITOR": AMBER,
-                "ROUTINE": TEAL_MID, "ARTIFACT REVIEW": NEUTRAL_GRAY,
-            }
-            badge_color = urgency_colors.get(handoff.urgency_level, TEAL_LIGHT)
-            st.markdown(
-                f'<div style="display:inline-block; background:{badge_color}; '
-                f'color:white; padding:4px 14px; border-radius:20px; '
-                f'font-weight:600; font-size:0.8rem;">'
-                f'{handoff.urgency_level}</div>',
-                unsafe_allow_html=True,
-            )
+            st.markdown(urgency_badge_html(handoff.urgency_level), unsafe_allow_html=True)
             st.write("")
             st.write(handoff.summary_text)
 
@@ -784,3 +691,143 @@ elif page == "Run Single Trace":
             for e in evals
         ])
         st.dataframe(eval_df, use_container_width=True, hide_index=True)
+
+
+# ---------------------------------------------------------------------------
+# Page: Design System
+# ---------------------------------------------------------------------------
+
+elif page == "Design System":
+    st.header("Design System")
+    st.caption("Owlet-inspired tokens — colors, typography, and component patterns")
+
+    # --- Color Palette ---
+    st.subheader("Color Palette")
+
+    def _swatch(hex_color: str, name: str, usage: str) -> str:
+        """Render an HTML color swatch card."""
+        # Use white text on dark colors, dark text on light
+        text_color = "#FEFCFA" if hex_color in (TEAL_DARK, URGENT_RED, AMBER, NEUTRAL_GRAY) else TEAL_DARK
+        return (
+            f'<div style="display:inline-block; width:155px; margin:0 10px 12px 0; '
+            f'border-radius:12px; overflow:hidden; border:1px solid {BORDER}; '
+            f'background:{WARM_WHITE}; vertical-align:top;">'
+            f'<div style="background:{hex_color}; height:56px; display:flex; '
+            f'align-items:flex-end; padding:6px 10px;">'
+            f'<span style="font-size:0.7rem; font-weight:600; color:{text_color}; '
+            f'background:rgba(255,255,255,0.15); padding:1px 6px; border-radius:3px;">'
+            f'{hex_color}</span></div>'
+            f'<div style="padding:8px 10px;">'
+            f'<div style="font-weight:600; color:{TEAL_DARK}; font-size:0.82rem;">{name}</div>'
+            f'<div style="color:{MUTED_TEXT}; font-size:0.72rem; margin-top:1px;">{usage}</div>'
+            f'</div></div>'
+        )
+
+    st.markdown("**Primary / Brand**", unsafe_allow_html=True)
+    swatches = (
+        _swatch(TEAL_DARK, "Teal Dark", "Headings, dark text")
+        + _swatch(TEAL_PRIMARY, "Teal Primary", "Buttons, accents, links")
+        + _swatch(TEAL_LIGHT, "Teal Light", "Icons, secondary labels")
+        + _swatch(SAGE, "Sage", "Secondary chart bars")
+    )
+    st.markdown(swatches, unsafe_allow_html=True)
+
+    st.markdown("**Backgrounds & Surfaces**", unsafe_allow_html=True)
+    swatches = (
+        _swatch(CREAM_BG, "Cream BG", "Page background")
+        + _swatch(WARM_WHITE, "Warm White", "Cards, sidebar, plots")
+        + _swatch(SAGE_BG, "Sage BG", "Table headers, highlights")
+        + _swatch(BORDER, "Border", "Dividers, grid lines")
+    )
+    st.markdown(swatches, unsafe_allow_html=True)
+
+    st.markdown("**Clinical Status**", unsafe_allow_html=True)
+    swatches = (
+        _swatch(URGENT_RED, "Urgent Red", "SpO2 < 90%")
+        + _swatch(AMBER, "Amber", "Borderline, 90-94%")
+        + _swatch(NEUTRAL_GRAY, "Neutral Gray", "Artifact, disabled")
+    )
+    st.markdown(swatches, unsafe_allow_html=True)
+
+    # --- Typography ---
+    st.subheader("Typography")
+
+    type_samples = [
+        (f"font-family:{FONT_HEADING}; color:{TEAL_DARK}; font-weight:600; font-size:2rem;",
+         "Neonatal SpO2 AI Eval Pipeline",
+         f"H1 — Playfair Display 600 / 2rem"),
+        (f"font-family:{FONT_HEADING}; color:{TEAL_DARK}; font-weight:500; font-size:1.4rem;",
+         "Pipeline Overview",
+         "H2 — Playfair Display 500 / 1.4rem"),
+        (f"font-family:{FONT_HEADING}; color:{TEAL_DARK}; font-weight:500; font-size:1.15rem; font-style:italic;",
+         "monitor what matters most",
+         "H3 Italic — Playfair Display 500 italic / 1.15rem"),
+        (f"font-family:{FONT_BODY}; color:{BODY_TEXT}; font-size:0.95rem; line-height:1.5;",
+         "The pipeline generates synthetic pulse oximetry data with gestational-age-adjusted baselines.",
+         f"Body — DM Sans 400 / 0.95rem"),
+        (f"font-family:{FONT_BODY}; color:{MUTED_TEXT}; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.06em;",
+         "TOTAL TRACES",
+         "Label — DM Sans / 0.78rem / uppercase"),
+    ]
+
+    for style, text, meta in type_samples:
+        st.markdown(
+            f'<div style="background:{WARM_WHITE}; border:1px solid {BORDER}; '
+            f'border-radius:12px; padding:18px 22px; margin-bottom:10px;">'
+            f'<div style="{style}">{text}</div>'
+            f'<div style="color:{MUTED_TEXT}; font-size:0.72rem; margin-top:6px; '
+            f'font-family:{FONT_BODY};">{meta}</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+    # --- Component Patterns ---
+    st.subheader("Component Patterns")
+
+    # Metric cards
+    st.markdown("**Metric Cards**")
+    mc1, mc2, mc3 = st.columns(3)
+    mc1.metric("Total Traces", "300")
+    mc2.metric("Tier 1 (Rules)", "183 (61%)")
+    mc3.metric("Clinical Accuracy", "89.2%")
+
+    # Urgency badges
+    st.markdown("**Urgency Badges**")
+    badges = "".join(urgency_badge_html(level) + "&nbsp;&nbsp;" for level in URGENCY_COLORS)
+    st.markdown(badges, unsafe_allow_html=True)
+    st.write("")
+
+    # Chart color sequences
+    st.markdown("**Chart Color Sequences**")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("*Tier sequence*")
+        dots = ""
+        for name, color in [("Tier 1", TEAL_PRIMARY), ("Tier 2", SAGE), ("Expert", AMBER)]:
+            dots += (
+                f'<span style="display:inline-flex; align-items:center; margin-right:16px;">'
+                f'<span style="width:18px; height:18px; border-radius:50%; '
+                f'background:{color}; display:inline-block; margin-right:6px;"></span>'
+                f'<span style="font-size:0.85rem; color:{BODY_TEXT};">{name}</span></span>'
+            )
+        st.markdown(dots, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("*Clinical labels*")
+        dots = ""
+        for name, color in LABEL_COLORS.items():
+            dots += (
+                f'<span style="display:inline-flex; align-items:center; margin-right:16px;">'
+                f'<span style="width:18px; height:18px; border-radius:50%; '
+                f'background:{color}; display:inline-block; margin-right:6px;"></span>'
+                f'<span style="font-size:0.85rem; color:{BODY_TEXT};">{name}</span></span>'
+            )
+        st.markdown(dots, unsafe_allow_html=True)
+
+    # Patient detail rows
+    st.write("")
+    st.markdown("**Patient Detail Row**")
+    st.markdown(detail_row_html("Gestational Age", "32w (very preterm)"), unsafe_allow_html=True)
+    st.markdown(detail_row_html("Mean SpO2", "94.2%"), unsafe_allow_html=True)
+    st.markdown(detail_row_html("Pipeline Label", "borderline"), unsafe_allow_html=True)

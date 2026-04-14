@@ -6,6 +6,11 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from src.data_gen.synthetic import NightTrace
+from app.theme import (
+    TEAL_DARK, TEAL_PRIMARY, TEAL_LIGHT,
+    URGENT_RED, AMBER, WARM_WHITE, BORDER,
+    FONT_HEADING, FONT_BODY,
+)
 
 
 def plot_trace(
@@ -36,15 +41,6 @@ def plot_trace(
         fig = make_subplots(specs=[[{"secondary_y": True}]])
     else:
         fig = go.Figure()
-
-    # Owlet palette (matched from owletcare.com)
-    TEAL_DARK = "#2C5F5B"
-    TEAL_PRIMARY = "#5BA69E"
-    TEAL_LIGHT = "#6BACA4"
-    URGENT_RED = "#C1565B"
-    AMBER = "#D4A054"
-    WARM_WHITE = "#FEFCFA"
-    BORDER = "#E2DDD8"
 
     # Main SpO2 line
     fig.add_trace(go.Scatter(
@@ -93,13 +89,13 @@ def plot_trace(
 
     fig.update_layout(
         title=dict(text=title, font=dict(color=TEAL_DARK, size=14,
-                   family="Playfair Display, Georgia, serif")),
+                   family=FONT_HEADING)),
         xaxis_title="Hours into night",
         yaxis_title="SpO2 (%)",
         yaxis=dict(range=[60, 102], gridcolor=BORDER),
         xaxis=dict(gridcolor=BORDER),
         height=400,
-        font=dict(family="DM Sans, system-ui, sans-serif", color=TEAL_DARK),
+        font=dict(family=FONT_BODY, color=TEAL_DARK),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor=WARM_WHITE,
         legend=dict(orientation="h", yanchor="bottom", y=1.02),
