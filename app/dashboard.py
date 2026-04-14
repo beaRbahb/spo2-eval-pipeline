@@ -37,8 +37,8 @@ from app.theme import (
     FONT_HEADING, FONT_BODY,
     TIER_COLORS, FUNNEL_COLORS, LABEL_COLORS, EVAL_COLORS,
     URGENCY_COLORS, PLOTLY_LAYOUT, GLOBAL_CSS,
-    section_card, metric_card_html, page_intro_html,
-    urgency_badge_html, detail_row_html,
+    section_card, metric_card_html, page_intro_html, segmented_bar_html,
+    accuracy_rows_html, urgency_badge_html, detail_row_html,
 )
 
 
@@ -203,12 +203,13 @@ if page == "Pipeline Overview":
                     accent_color=AMBER,
                     delta=f"{eq/total*100:.0f}% of total"), unsafe_allow_html=True)
 
-    st.markdown('<div style="height:12px;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:16px;"></div>', unsafe_allow_html=True)
 
-    # Two-column layout: accuracy chart + pie chart, wrapped in section cards
-    left_col, right_col = st.columns(2)
+    # Two-column layout: accuracy + distribution, bottom-aligned
+    left_col, right_col = st.columns(2, vertical_alignment="bottom")
 
     with left_col:
+        # Compute accuracy per tier
         tier_data = []
         for r in tier1_results:
             if r.auto_labeled:
@@ -220,34 +221,20 @@ if page == "Pipeline Overview":
             tier_data.append({"Tier": "Expert Review", "Correct": r.expert_label == r.ground_truth})
 
         tier_df = pd.DataFrame(tier_data)
+        acc_rows = []
         if not tier_df.empty:
             acc = tier_df.groupby("Tier")["Correct"].mean().reset_index()
             acc.columns = ["Tier", "Accuracy"]
             acc["Accuracy"] = (acc["Accuracy"] * 100).round(1)
+            color_map = {"Tier 1 (Rules)": TEAL_PRIMARY, "Tier 2 (ML)": SAGE, "Expert Review": AMBER}
+            for _, row in acc.iterrows():
+                acc_rows.append((row["Tier"], row["Accuracy"], color_map.get(row["Tier"], TEAL_PRIMARY)))
 
-            fig_acc = go.Figure(go.Bar(
-                x=acc["Accuracy"],
-                y=acc["Tier"],
-                orientation="h",
-                marker=dict(
-                    color=TIER_COLORS,
-                    line=dict(width=0),
-                ),
-                text=[f"{v:.1f}%" for v in acc["Accuracy"]],
-                textposition="auto",
-                textfont=dict(color="white", size=14, family=FONT_BODY),
-            ))
-            fig_acc.update_layout(
-                **PLOTLY_LAYOUT,
-                title=dict(text="Accuracy by Tier", font=dict(
-                    family=FONT_HEADING, size=16, color=TEAL_DARK)),
-                height=240,
-                xaxis=dict(range=[0, 105], title="", gridcolor=BORDER,
-                           showline=False, zeroline=False),
-                yaxis=dict(autorange="reversed", showgrid=False),
-                showlegend=False,
-            )
-            st.plotly_chart(fig_acc, use_container_width=True, key="acc_chart")
+        st.markdown(section_card(
+            "Accuracy by Tier",
+            accuracy_rows_html(acc_rows),
+            subtitle="Classification correctness at each triage level",
+        ), unsafe_allow_html=True)
 
     with right_col:
         gt_counts = Counter(t.ground_truth_label for t in traces)
@@ -266,49 +253,42 @@ if page == "Pipeline Overview":
             textfont=dict(size=13, family=FONT_BODY, color="white"),
             hoverinfo="label+value+percent",
         ))
+        pie_layout = {k: v for k, v in PLOTLY_LAYOUT.items() if k != "margin"}
         fig_pie.update_layout(
-            **PLOTLY_LAYOUT,
-            title=dict(text="Ground Truth Distribution", font=dict(
-                family=FONT_HEADING, size=16, color=TEAL_DARK)),
-            height=340,
+            **pie_layout,
+            height=260,
+            margin=dict(l=10, r=10, t=10, b=40),
             showlegend=True,
             legend=dict(
-                orientation="h", yanchor="top", y=-0.05, xanchor="center", x=0.5,
+                orientation="h", yanchor="top", y=-0.08, xanchor="center", x=0.5,
                 font=dict(family=FONT_BODY, size=12, color=TEAL_DARK),
             ),
             annotations=[dict(
                 text=f"<b>{total}</b><br><span style='font-size:11px'>traces</span>",
-                x=0.5, y=0.5, font=dict(size=18, color=TEAL_DARK, family=FONT_HEADING),
+                x=0.5, y=0.5, font=dict(size=18, color=TEAL_DARK, family=FONT_BODY),
                 showarrow=False,
             )],
         )
-        st.plotly_chart(fig_pie, use_container_width=True, key="pie_chart")
 
-    # Coverage funnel in a section card
-    st.markdown(f"""
-    <div style="background:{WARM_WHITE}; border:1px solid {BORDER};
-    border-radius:14px; padding:24px; margin-top:4px;
-    box-shadow:0 1px 6px rgba(44,95,91,0.05);">
-    <div style="font-family:{FONT_HEADING}; color:{TEAL_DARK};
-    font-weight:500; font-size:1.15rem; margin-bottom:4px;">Triage Funnel</div>
-    <div style="color:{MUTED_TEXT}; font-size:0.8rem; margin-bottom:12px;
-    font-family:{FONT_BODY};">How traces flow through the three classification tiers</div>
-    <div style="border-bottom:1px solid {BORDER}; margin-bottom:16px;"></div>
-    """, unsafe_allow_html=True)
+        # Use st.container with border for a native card wrapper
+        with st.container(border=True):
+            st.markdown(
+                f'<div style="font-family:{FONT_HEADING}; color:{TEAL_DARK}; '
+                f'font-weight:500; font-size:1.15rem;">Ground Truth Distribution</div>'
+                f'<div style="color:{MUTED_TEXT}; font-size:0.8rem; margin-top:2px; '
+                f'font-family:{FONT_BODY};">Synthetic dataset label balance</div>',
+                unsafe_allow_html=True,
+            )
+            st.plotly_chart(fig_pie, use_container_width=True, key="pie_chart")
 
-    fig_funnel = go.Figure(go.Funnel(
-        y=["All Traces", "Tier 1 Auto-labeled", "Tier 2 Auto-labeled", "Expert Queue"],
-        x=[total, t1, t2, eq],
-        marker=dict(color=FUNNEL_COLORS),
-        textinfo="value+percent initial",
-        textfont=dict(family=FONT_BODY, size=14),
-        connector=dict(line=dict(color=BORDER)),
-    ))
-    funnel_layout = {k: v for k, v in PLOTLY_LAYOUT.items() if k != "margin"}
-    fig_funnel.update_layout(**funnel_layout, height=240,
-                             margin=dict(l=20, r=20, t=10, b=20))
-    st.plotly_chart(fig_funnel, use_container_width=True, key="funnel_chart")
-    st.markdown("</div>", unsafe_allow_html=True)
+    # Triage distribution — segmented bar
+    st.markdown(segmented_bar_html([
+        ("Tier 1 (Rules)", t1, TEAL_PRIMARY),
+        ("Tier 2 (ML)", t2, SAGE),
+        ("Expert Queue", eq, AMBER),
+    ], total, title="Triage Distribution",
+       subtitle=f"{total} traces routed across three tiers"),
+    unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
@@ -344,36 +324,20 @@ elif page == "Pre-Annotation Coverage":
                     accent_color=AMBER,
                     delta=f"{eq/total*100:.0f}% of total"), unsafe_allow_html=True)
 
-    st.markdown('<div style="height:12px;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:16px;"></div>', unsafe_allow_html=True)
 
-    # Stacked bar in section card
-    fig = go.Figure()
-    fig.add_trace(go.Bar(
-        name="Tier 1 (Rules)", x=["Coverage"], y=[t1],
-        marker_color=TEAL_PRIMARY, text=[t1], textposition="inside",
-        textfont=dict(color="white", size=14),
-    ))
-    fig.add_trace(go.Bar(
-        name="Tier 2 (ML)", x=["Coverage"], y=[t2],
-        marker_color=SAGE, text=[t2], textposition="inside",
-        textfont=dict(color=TEAL_DARK, size=14),
-    ))
-    fig.add_trace(go.Bar(
-        name="Expert Queue", x=["Coverage"], y=[eq],
-        marker_color=AMBER, text=[eq], textposition="inside",
-        textfont=dict(color="white", size=14),
-    ))
-    fig.update_layout(
-        **PLOTLY_LAYOUT, barmode="stack", height=280,
-        title=dict(text="Coverage Stack", font=dict(
-            family=FONT_HEADING, size=16, color=TEAL_DARK)),
-        yaxis_title="Traces", xaxis=dict(showticklabels=False),
-        legend=dict(orientation="h", yanchor="bottom", y=1.05,
-                    font=dict(family=FONT_BODY, size=12)),
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    # Coverage breakdown as flat bars
+    st.markdown(section_card(
+        "Coverage by Tier",
+        accuracy_rows_html([
+            ("Tier 1 (Rules)", t1 / total * 100, TEAL_PRIMARY),
+            ("Tier 2 (ML)", t2 / total * 100, SAGE),
+            ("Expert Queue", eq / total * 100, AMBER),
+        ]),
+        subtitle="Percentage of traces handled at each triage level",
+    ), unsafe_allow_html=True)
 
-    # Breakdown by ground truth label x tier
+    # Breakdown by ground truth label x tier — styled HTML table
     rows = []
     for r in tier1_results:
         if r.auto_labeled:
@@ -389,22 +353,32 @@ elif page == "Pre-Annotation Coverage":
         ct = pd.crosstab(breakdown["Ground Truth"], breakdown["Tier"])
         tier_order = ["Tier 1", "Tier 2", "Expert"]
 
-        fig_bt = go.Figure()
-        for tier, color in zip(tier_order, TIER_COLORS):
-            if tier in ct.columns:
-                fig_bt.add_trace(go.Bar(
-                    name=tier, x=ct.index, y=ct[tier],
-                    marker_color=color,
-                ))
-        fig_bt.update_layout(
-            **PLOTLY_LAYOUT, barmode="group", height=350,
-            title=dict(text="Breakdown by Pattern Type", font=dict(
-                family=FONT_HEADING, size=16, color=TEAL_DARK)),
-            yaxis_title="Traces", xaxis_title="Ground Truth Label",
-            legend=dict(orientation="h", yanchor="bottom", y=1.05,
-                        font=dict(family=FONT_BODY, size=12)),
+        # Build styled HTML table
+        thead = "".join(f'<th style="text-align:center; padding:10px 16px; '
+                        f'background:{SAGE_BG}; color:{TEAL_DARK}; font-weight:600; '
+                        f'font-family:{FONT_BODY}; font-size:0.82rem; '
+                        f'border-bottom:1px solid {BORDER};">{t}</th>' for t in ["Label"] + tier_order)
+        tbody = ""
+        for label in ct.index:
+            cells = f'<td style="padding:10px 16px; border-bottom:1px solid {BORDER}; '\
+                    f'color:{TEAL_DARK}; font-weight:500; font-family:{FONT_BODY}; '\
+                    f'font-size:0.85rem; text-transform:capitalize;">{label}</td>'
+            for tier in tier_order:
+                val = ct.at[label, tier] if tier in ct.columns else 0
+                cells += (f'<td style="text-align:center; padding:10px 16px; '
+                          f'border-bottom:1px solid {BORDER}; color:{BODY_TEXT}; '
+                          f'font-family:{FONT_BODY}; font-size:0.85rem;">{val}</td>')
+            tbody += f'<tr>{cells}</tr>'
+
+        table_html = (
+            f'<table style="width:100%; border-collapse:collapse;">'
+            f'<thead><tr>{thead}</tr></thead><tbody>{tbody}</tbody></table>'
         )
-        st.plotly_chart(fig_bt, use_container_width=True)
+        st.markdown(section_card(
+            "Breakdown by Pattern Type",
+            table_html,
+            subtitle="How each ground truth label was routed across tiers",
+        ), unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
@@ -449,27 +423,24 @@ elif page == "Rule Discovery":
 
     # Feature importance from decision tree
     if tree is not None:
-        st.subheader("Decision Tree Feature Importance")
         importances = tree.feature_importances_
         feat_imp = pd.DataFrame({
             "Feature": FEATURE_COLS,
             "Importance": importances,
-        }).sort_values("Importance", ascending=True)
+        }).sort_values("Importance", ascending=False)
         feat_imp = feat_imp[feat_imp["Importance"] > 0]
 
         if not feat_imp.empty:
-            fig = go.Figure(go.Bar(
-                x=feat_imp["Importance"],
-                y=feat_imp["Feature"],
-                orientation="h",
-                marker_color=TEAL_PRIMARY,
-            ))
-            fig.update_layout(
-                **PLOTLY_LAYOUT,
-                height=max(280, len(feat_imp) * 35),
-                xaxis=dict(title="Importance", gridcolor=BORDER),
-            )
-            st.plotly_chart(fig, use_container_width=True)
+            max_imp = feat_imp["Importance"].max()
+            imp_rows = [
+                (row["Feature"], row["Importance"] / max_imp * 100, TEAL_PRIMARY)
+                for _, row in feat_imp.iterrows()
+            ]
+            st.markdown(section_card(
+                "Feature Importance",
+                accuracy_rows_html(imp_rows),
+                subtitle="Decision tree split importance (normalized to top feature)",
+            ), unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
@@ -519,30 +490,19 @@ elif page == "Eval Scores":
                             delta=f"{int(eval_df[eval_df['Evaluator']==row['Evaluator']].shape[0])} evaluations"),
                             unsafe_allow_html=True)
 
-        st.markdown('<div style="height:12px;"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="height:16px;"></div>', unsafe_allow_html=True)
 
-        # Gauge-style bar chart
-        fig = go.Figure()
+        # Pass rate bars — flat HTML matching the accuracy style
+        eval_rows = []
         for i, (_, row) in enumerate(pass_rates.iterrows()):
             name = pretty_names.get(row["Evaluator"], row["Evaluator"])
-            fig.add_trace(go.Bar(
-                x=[row["Pass Rate (%)"]], y=[name],
-                orientation="h", name=name,
-                marker_color=EVAL_COLORS[i % len(EVAL_COLORS)],
-                text=[f"{row['Pass Rate (%)']:.1f}%"],
-                textposition="auto",
-                textfont=dict(color="white", size=14, family=FONT_BODY),
-            ))
-        fig.update_layout(
-            **PLOTLY_LAYOUT, height=220,
-            title=dict(text="Pass Rates by Evaluator", font=dict(
-                family=FONT_HEADING, size=16, color=TEAL_DARK)),
-            xaxis=dict(range=[0, 105], title="", gridcolor=BORDER,
-                       showline=False, zeroline=False),
-            showlegend=False,
-            yaxis=dict(autorange="reversed", showgrid=False),
-        )
-        st.plotly_chart(fig, use_container_width=True)
+            eval_rows.append((name, row["Pass Rate (%)"], EVAL_COLORS[i % len(EVAL_COLORS)]))
+
+        st.markdown(section_card(
+            "Pass Rates by Evaluator",
+            accuracy_rows_html(eval_rows),
+            subtitle="Percentage of traces that passed each LLM judge",
+        ), unsafe_allow_html=True)
 
         # Detailed results
         with st.expander("Detailed Results", expanded=False):
@@ -575,9 +535,10 @@ elif page == "Sample Handoffs":
     )
     trace = label_samples[selected_label]
 
-    # Show trace plot
-    fig = plot_trace(trace, show_accel=True)
-    st.plotly_chart(fig, use_container_width=True)
+    # Show trace plot in card
+    with st.container(border=True):
+        fig = plot_trace(trace, show_accel=True)
+        st.plotly_chart(fig, use_container_width=True)
 
     # Show handoff
     final_label = final_labels.get(trace.night_id, trace.ground_truth_label)
@@ -585,16 +546,23 @@ elif page == "Sample Handoffs":
 
     col1, col2 = st.columns([3, 2])
     with col1:
-        st.subheader("Pipeline Handoff")
         handoff = handoffs_map.get(trace.night_id)
         if handoff:
-            st.markdown(urgency_badge_html(handoff.urgency_level), unsafe_allow_html=True)
-            st.write("")
-            st.write(handoff.summary_text)
-            st.caption(f"Source: {handoff.source} | Triage: {final_label} via {source}")
+            handoff_body = (
+                urgency_badge_html(handoff.urgency_level)
+                + f'<div style="margin-top:14px; font-family:{FONT_BODY}; '
+                  f'color:{BODY_TEXT}; font-size:0.9rem; line-height:1.6;">'
+                  f'{handoff.summary_text}</div>'
+                + f'<div style="margin-top:10px; color:{MUTED_TEXT}; '
+                  f'font-size:0.78rem; font-family:{FONT_BODY};">'
+                  f'Source: {handoff.source} &middot; Triage: {final_label} via {source}</div>'
+            )
+            st.markdown(section_card(
+                "Pipeline Handoff", handoff_body,
+                subtitle="Structured summary for clinical staff",
+            ), unsafe_allow_html=True)
 
     with col2:
-        st.subheader("Patient Details")
         details = {
             "Baby ID": trace.baby.baby_id,
             "GA": f"{trace.baby.gestational_age_weeks}w ({trace.baby.ga_category})",
@@ -607,8 +575,11 @@ elif page == "Sample Handoffs":
             "Min SpO2": f"{np.min(trace.spo2):.0f}%",
             "Events": len(trace.events),
         }
-        for k, v in details.items():
-            st.markdown(detail_row_html(k, str(v)), unsafe_allow_html=True)
+        details_html = "".join(detail_row_html(k, str(v)) for k, v in details.items())
+        st.markdown(section_card(
+            "Patient Details", details_html,
+            subtitle="Baby demographics and trace summary",
+        ), unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
@@ -643,54 +614,78 @@ elif page == "Run Single Trace":
 
         trace = generate_trace(baby, pattern, 1, rng)
 
-        # Show trace
-        fig = plot_trace(trace, show_accel=True)
-        st.plotly_chart(fig, use_container_width=True)
+        # Show trace in card
+        with st.container(border=True):
+            fig = plot_trace(trace, show_accel=True)
+            st.plotly_chart(fig, use_container_width=True)
 
         # Run rules
         rule_result = apply_rules(trace)
 
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.subheader("Tier 1 (Rules)")
             if rule_result.auto_labeled:
-                st.success(f"Label: **{rule_result.label}**")
-                st.write(f"Rule: {rule_result.rule_triggered}")
-                st.write(f"Confidence: {rule_result.confidence}")
+                body = (
+                    f'<div style="font-family:{FONT_BODY}; color:{BODY_TEXT}; font-size:0.9rem;">'
+                    f'<div style="margin-bottom:6px;"><strong>Label:</strong> {rule_result.label}</div>'
+                    f'<div style="margin-bottom:6px;"><strong>Rule:</strong> {rule_result.rule_triggered}</div>'
+                    f'<div><strong>Confidence:</strong> {rule_result.confidence}</div></div>'
+                )
             else:
-                st.warning("No rule matched — routes to Tier 2")
+                body = (
+                    f'<div style="background:{SAGE_BG}; border-radius:8px; padding:12px; '
+                    f'font-family:{FONT_BODY}; color:{AMBER}; font-size:0.85rem;">'
+                    f'No rule matched — routes to Tier 2</div>'
+                )
+            st.markdown(section_card("Tier 1 (Rules)", body), unsafe_allow_html=True)
 
         with col2:
-            st.subheader("Classification")
-            final_label = rule_result.label or pattern  # fallback
-            st.write(f"**Final label:** {final_label}")
-            st.write(f"**Ground truth:** {pattern}")
-            if final_label == pattern:
-                st.success("Correct!")
-            else:
-                st.error(f"Mismatch: predicted {final_label}, actual {pattern}")
+            final_label = rule_result.label or pattern
+            match = final_label == pattern
+            match_color = TEAL_PRIMARY if match else URGENT_RED
+            match_text = "Correct" if match else f"Mismatch"
+            body = (
+                f'<div style="font-family:{FONT_BODY}; color:{BODY_TEXT}; font-size:0.9rem;">'
+                f'<div style="margin-bottom:6px;"><strong>Final label:</strong> {final_label}</div>'
+                f'<div style="margin-bottom:8px;"><strong>Ground truth:</strong> {pattern}</div>'
+                f'<div style="display:inline-block; background:{match_color}; color:white; '
+                f'padding:4px 14px; border-radius:{RADIUS_BADGE}; font-size:0.8rem; '
+                f'font-weight:600;">{match_text}</div></div>'
+            )
+            st.markdown(section_card("Classification", body), unsafe_allow_html=True)
 
         with col3:
-            st.subheader("Handoff")
             handoff = generate_handoff(trace, final_label, use_llm=False)
-            st.markdown(urgency_badge_html(handoff.urgency_level), unsafe_allow_html=True)
-            st.write("")
-            st.write(handoff.summary_text)
+            body = (
+                urgency_badge_html(handoff.urgency_level)
+                + f'<div style="margin-top:12px; font-family:{FONT_BODY}; '
+                  f'color:{BODY_TEXT}; font-size:0.85rem; line-height:1.5;">'
+                  f'{handoff.summary_text}</div>'
+            )
+            st.markdown(section_card("Handoff", body), unsafe_allow_html=True)
 
         # Eval results
-        st.subheader("Evaluator Results")
+        st.markdown('<div style="height:8px;"></div>', unsafe_allow_html=True)
         s = int(trace_seed)
         evals = [
             evaluate_clinical_accuracy(trace, final_label, seed=s),
             evaluate_handoff_quality(trace, handoff, final_label, seed=s+1),
             evaluate_artifact_handling(trace, final_label, seed=s+2),
         ]
-        eval_df = pd.DataFrame([
-            {"Evaluator": e.evaluator.replace("_", " ").title(),
-             "Result": e.answer, "Reasoning": e.reasoning}
-            for e in evals
-        ])
-        st.dataframe(eval_df, use_container_width=True, hide_index=True)
+
+        eval_cols = st.columns(3)
+        for i, e in enumerate(evals):
+            name = e.evaluator.replace("_", " ").title()
+            result_color = TEAL_PRIMARY if e.answer == "Pass" else URGENT_RED
+            body = (
+                f'<div style="display:inline-block; background:{result_color}; color:white; '
+                f'padding:4px 14px; border-radius:{RADIUS_BADGE}; font-size:0.8rem; '
+                f'font-weight:600; margin-bottom:10px;">{e.answer}</div>'
+                f'<div style="font-family:{FONT_BODY}; color:{MUTED_TEXT}; '
+                f'font-size:0.8rem; line-height:1.4; margin-top:4px;">{e.reasoning}</div>'
+            )
+            with eval_cols[i]:
+                st.markdown(section_card(name, body), unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
@@ -787,9 +782,15 @@ elif page == "Design System":
     # Metric cards
     st.markdown("**Metric Cards**")
     mc1, mc2, mc3 = st.columns(3)
-    mc1.metric("Total Traces", "300")
-    mc2.metric("Tier 1 (Rules)", "183 (61%)")
-    mc3.metric("Clinical Accuracy", "89.2%")
+    with mc1:
+        st.markdown(metric_card_html("Total Traces", "300",
+                    accent_color=TEAL_DARK), unsafe_allow_html=True)
+    with mc2:
+        st.markdown(metric_card_html("Tier 1 (Rules)", "183",
+                    accent_color=TEAL_PRIMARY, delta="61% of total"), unsafe_allow_html=True)
+    with mc3:
+        st.markdown(metric_card_html("Clinical Accuracy", "89.2%",
+                    accent_color=SAGE, delta="300 evaluations"), unsafe_allow_html=True)
 
     # Urgency badges
     st.markdown("**Urgency Badges**")
