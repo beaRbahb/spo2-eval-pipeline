@@ -37,6 +37,7 @@ from app.theme import (
     CREAM_BG, WARM_WHITE, BODY_TEXT, MUTED_TEXT, BORDER,
     URGENT_RED, AMBER, NEUTRAL_GRAY,
     FONT_HEADING, FONT_BODY,
+    RADIUS_CARD, RADIUS_TABLE, RADIUS_BADGE,
     TIER_COLORS, FUNNEL_COLORS, LABEL_COLORS, EVAL_COLORS,
     URGENCY_COLORS, PLOTLY_LAYOUT, GLOBAL_CSS,
     section_card, metric_card_html, page_intro_html, segmented_bar_html,
