@@ -442,6 +442,18 @@ The parser checked `text.startswith("URGENT")` before checking for EMERGENCY. Si
 5. **Clinical correlation**: Added family-facing questions to emergency and urgent mock templates
 6. **Live prompt requirements**: Added rules 8 (911 for EMERGENCY) and 9 (clinical correlation for URGENT/EMERGENCY)
 
+### Additional findings from live eval rerun
+
+After the initial fixes, live eval still showed handoff quality at 20-30%. Two more issues found:
+
+**Vague timeframes in ROUTINE handoffs.** Claude consistently generated action steps like "at your next scheduled check-in" without concrete timeframes, which the handoff quality evaluator correctly flagged as not meeting the "specific actionable next step" criterion. The mock templates already had this right ("Next routine review in 7 days"). Fix: added requirement 10 to the live prompt mandating specific timeframes in every action step.
+
+**Markdown formatting in urgency parsing.** Claude frequently wraps the urgency level in markdown (`**ROUTINE**`, `# EMERGENCY`). The parser used `text.startswith("EMERGENCY")` which fails when the text starts with `#` or `**`. Fix: strip markdown formatting (`#`, `*`, spaces) before matching urgency.
+
+After these fixes, handoff quality recovered to 80%. The remaining ~10% gap vs v1's 90% comes from two sources:
+1. ROUTINE handoffs where Claude still occasionally hedges the action language despite the prompt requirement
+2. Label mismatch cases (GT=urgent, assigned=emergency) where the synthetic ground truth predates the emergency tier — these are correct clinical behavior (SpO2 73% should be emergency) but the mock evaluator fails them because GT≠assigned
+
 ### V1 review fixes confirmed adequate
 
 All P1 (safety-critical) and P2 (clinical accuracy) fixes from #13 are working correctly:
