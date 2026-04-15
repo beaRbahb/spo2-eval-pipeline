@@ -434,3 +434,67 @@ def detail_row_html(label: str, value: str) -> str:
         f'font-family:{FONT_BODY};">{value}</span>'
         f'</div>'
     )
+
+
+# ---------------------------------------------------------------------------
+# HL7 message display
+# ---------------------------------------------------------------------------
+
+HL7_CODE_BG = "#F5F0EB"           # Warm monospace background for HL7 messages
+HL7_SEGMENT_COLORS = {
+    "MSH": TEAL_DARK,
+    "EVN": SAGE,
+    "PID": TEAL_PRIMARY,
+    "PV1": TEAL_LIGHT,
+    "OBX": "#6B8F71",   # Muted green — observations stand out
+    "OBR": "#6B8F71",
+    "NTE": AMBER,
+    "DG1": URGENT_RED,
+    "MSA": TEAL_PRIMARY,
+}
+
+
+def hl7_message_html(message: str, title: str = "HL7 Message") -> str:
+    """Render an HL7v2 message with syntax highlighting.
+
+    Highlights segment identifiers (MSH, PID, OBX) in color,
+    pipe delimiters in muted gray, and wraps in a styled code block.
+    """
+    lines = message.split("\r")
+    highlighted_lines = []
+
+    for line in lines:
+        if not line.strip():
+            continue
+        seg_id = line.split("|")[0]
+        seg_color = HL7_SEGMENT_COLORS.get(seg_id, BODY_TEXT)
+
+        # Highlight segment ID and pipe delimiters
+        # Replace the segment ID with a colored span
+        rest = line[len(seg_id):]
+        # Color the pipes in muted gray
+        rest = rest.replace("|", f'<span style="color:{MUTED_TEXT};">|</span>')
+
+        highlighted = (
+            f'<span style="color:{seg_color}; font-weight:700;">{seg_id}</span>'
+            f'{rest}'
+        )
+        highlighted_lines.append(highlighted)
+
+    content = "\n".join(highlighted_lines)
+
+    return (
+        f'<div style="background:{WARM_WHITE}; border:1px solid {BORDER}; '
+        f'border-radius:{RADIUS_CARD}; overflow:hidden; margin-bottom:16px; '
+        f'box-shadow:0 1px 6px rgba(44,95,91,0.05);">'
+        f'<div style="background:{HL7_CODE_BG}; padding:6px 16px; '
+        f'border-bottom:1px solid {BORDER};">'
+        f'<span style="font-family:{FONT_BODY}; font-size:0.78rem; '
+        f'font-weight:600; color:{TEAL_DARK}; text-transform:uppercase; '
+        f'letter-spacing:0.06em;">{title}</span></div>'
+        f'<pre style="background:{WARM_WHITE}; margin:0; padding:16px; '
+        f'font-family:\'SF Mono\', \'Fira Code\', monospace; font-size:0.78rem; '
+        f'line-height:1.7; color:{BODY_TEXT}; overflow-x:auto; '
+        f'white-space:pre-wrap; word-break:break-all;">{content}</pre>'
+        f'</div>'
+    )

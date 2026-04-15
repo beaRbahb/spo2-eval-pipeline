@@ -24,6 +24,8 @@ from src.patterns.miner import run_pattern_mining, FEATURE_COLS
 from src.classifier.tier2 import train_tier2, predict_tier2
 from src.classifier.expert_sim import run_expert_queue
 from src.handoff.generator import generate_handoff
+from src.interop.hl7_messages import build_adt_a01, build_ack_a01, build_oru_r01, parse_adt_a01
+from src.pipeline.orchestrator import FinalTriage
 from src.evals.clinical_accuracy import evaluate_clinical_accuracy
 from src.evals.handoff_quality import evaluate_handoff_quality
 from src.evals.artifact_handling import evaluate_artifact_handling
@@ -38,7 +40,7 @@ from app.theme import (
     TIER_COLORS, FUNNEL_COLORS, LABEL_COLORS, EVAL_COLORS,
     URGENCY_COLORS, PLOTLY_LAYOUT, GLOBAL_CSS,
     section_card, metric_card_html, page_intro_html, segmented_bar_html,
-    accuracy_rows_html, urgency_badge_html, detail_row_html,
+    accuracy_rows_html, urgency_badge_html, detail_row_html, hl7_message_html,
 )
 
 
@@ -142,6 +144,7 @@ page = st.sidebar.radio("View", [
     "Eval Scores",
     "Sample Handoffs",
     "Run Single Trace",
+    "Interoperability",
     "Design System",
 ])
 
@@ -776,6 +779,285 @@ elif page == "Run Single Trace":
             )
             with eval_cols[i]:
                 st.markdown(section_card(name, body), unsafe_allow_html=True)
+
+
+# ---------------------------------------------------------------------------
+# Page: Interoperability
+# ---------------------------------------------------------------------------
+
+elif page == "Interoperability":
+    st.header("Interoperability")
+
+    st.markdown(page_intro_html(
+        "HL7v2 message exchange layer demonstrating Rhapsody-style clinical data routing. "
+        "ADT^A01 admission messages trigger SpO2 monitoring; ORU^R01 results route "
+        "back to the EHR and nurse station. "
+        "<strong>LOINC 59408-5</strong> (pulse oximetry) with GA-adjusted thresholds."
+    ), unsafe_allow_html=True)
+
+    # --- Trace selector ---
+    label_samples = {}
+    for t in traces:
+        gt = t.ground_truth_label
+        if gt not in label_samples:
+            label_samples[gt] = t
+
+    selected_label = st.selectbox(
+        "Select pattern type",
+        list(label_samples.keys()),
+        key="interop_label_select",
+    )
+    trace = label_samples[selected_label]
+
+    # Build HL7 messages for selected trace
+    adt_msg = build_adt_a01(trace.baby)
+    ack_msg = build_ack_a01(adt_msg)
+    parsed_baby = parse_adt_a01(adt_msg)
+
+    final_label = final_labels.get(trace.night_id, trace.ground_truth_label)
+    source = final_sources.get(trace.night_id, "pipeline")
+    triage_obj = FinalTriage(
+        trace_id=trace.night_id,
+        baby_id=trace.baby.baby_id,
+        ground_truth=trace.ground_truth_label,
+        final_label=final_label,
+        source=source,
+        confidence=0.95,
+    )
+    handoff = handoffs_map.get(trace.night_id)
+    if not handoff:
+        handoff = generate_handoff(trace, final_label, use_llm=False)
+
+    tier1_events = [r.events_detected for r in tier1_results if r.trace_id == trace.night_id]
+    rule_events = tier1_events[0] if tier1_events else []
+    oru_msg = build_oru_r01(trace, triage_obj, handoff, rule_events=rule_events)
+
+    # --- Metric cards ---
+    adt_seg_count = len(adt_msg.split("\r"))
+    oru_obx_count = sum(1 for s in oru_msg.split("\r") if s.startswith("OBX"))
+    round_trip_match = (
+        parsed_baby.baby_id == trace.baby.baby_id
+        and parsed_baby.gestational_age_weeks == trace.baby.gestational_age_weeks
+        and parsed_baby.birth_weight_grams == trace.baby.birth_weight_grams
+    )
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown(metric_card_html("ADT Segments", str(adt_seg_count),
+                    accent_color=TEAL_PRIMARY), unsafe_allow_html=True)
+    with col2:
+        st.markdown(metric_card_html("OBX Observations", str(oru_obx_count),
+                    accent_color=SAGE), unsafe_allow_html=True)
+    with col3:
+        rt_color = TEAL_DARK if round_trip_match else URGENT_RED
+        rt_text = "Match" if round_trip_match else "Mismatch"
+        st.markdown(metric_card_html("Round-Trip", rt_text,
+                    accent_color=rt_color), unsafe_allow_html=True)
+
+    st.markdown('<div style="height:16px;"></div>', unsafe_allow_html=True)
+
+    # --- Route Diagram ---
+    route_html = f"""
+    <div style="display:flex; flex-direction:column; align-items:center; gap:0; padding:12px 0;">
+      <!-- Row 1: Device -> Rhapsody -> ACK back -->
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:4px;">
+        <div style="background:{WARM_WHITE}; border:2px solid {TEAL_PRIMARY}; border-radius:{RADIUS_CARD};
+                    padding:12px 20px; text-align:center; min-width:140px;">
+          <div style="font-family:{FONT_BODY}; font-weight:600; color:{TEAL_DARK}; font-size:0.85rem;">NICU Monitor</div>
+          <div style="font-family:{FONT_BODY}; color:{MUTED_TEXT}; font-size:0.7rem;">SpO2 device</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-family:{FONT_BODY}; font-weight:600; color:{TEAL_DARK}; font-size:0.72rem;">ADT^A01 &rarr;</div>
+          <div style="font-family:{FONT_BODY}; color:{MUTED_TEXT}; font-size:0.65rem;">&larr; ACK^A01</div>
+          <div style="font-family:{FONT_BODY}; color:{SAGE}; font-size:0.62rem; font-style:italic;">Triggers monitoring</div>
+        </div>
+        <div style="background:{WARM_WHITE}; border:2px solid {TEAL_DARK}; border-radius:{RADIUS_CARD};
+                    padding:12px 20px; text-align:center; min-width:160px;">
+          <div style="font-family:{FONT_BODY}; font-weight:600; color:{TEAL_DARK}; font-size:0.85rem;">Rhapsody Engine</div>
+          <div style="font-family:{FONT_BODY}; color:{MUTED_TEXT}; font-size:0.7rem;">Message router</div>
+        </div>
+      </div>
+
+      <!-- Arrow down -->
+      <div style="font-size:1.2rem; color:{TEAL_PRIMARY}; line-height:1;">&#8595;</div>
+      <div style="font-family:{FONT_BODY}; color:{MUTED_TEXT}; font-size:0.62rem; font-style:italic;">Route to pipeline</div>
+
+      <!-- Row 2: Pipeline -->
+      <div style="background:{WARM_WHITE}; border:2px solid {TEAL_PRIMARY}; border-radius:{RADIUS_CARD};
+                  padding:12px 24px; text-align:center; margin:4px 0; min-width:200px;">
+        <div style="font-family:{FONT_BODY}; font-weight:600; color:{TEAL_DARK}; font-size:0.85rem;">SpO2 Eval Pipeline</div>
+        <div style="font-family:{FONT_BODY}; color:{MUTED_TEXT}; font-size:0.7rem;">Phases 1-7 &middot; Triage + Handoff</div>
+      </div>
+
+      <!-- Arrow down -->
+      <div style="font-size:1.2rem; color:{TEAL_PRIMARY}; line-height:1;">&#8595;</div>
+      <div style="font-family:{FONT_BODY}; color:{MUTED_TEXT}; font-size:0.62rem; font-style:italic;">
+        Traced by message control ID</div>
+
+      <!-- Row 3: Rhapsody -> EHR -->
+      <div style="display:flex; align-items:center; gap:12px; margin-top:4px;">
+        <div style="background:{WARM_WHITE}; border:2px solid {TEAL_DARK}; border-radius:{RADIUS_CARD};
+                    padding:12px 20px; text-align:center; min-width:160px;">
+          <div style="font-family:{FONT_BODY}; font-weight:600; color:{TEAL_DARK}; font-size:0.85rem;">Rhapsody Engine</div>
+          <div style="font-family:{FONT_BODY}; color:{MUTED_TEXT}; font-size:0.7rem;">Route results</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-family:{FONT_BODY}; font-weight:600; color:{TEAL_DARK}; font-size:0.72rem;">ORU^R01 &rarr;</div>
+          <div style="font-family:{FONT_BODY}; color:{SAGE}; font-size:0.62rem; font-style:italic;">
+            Abnormal flags drive alerts</div>
+        </div>
+        <div style="background:{WARM_WHITE}; border:2px solid {TEAL_PRIMARY}; border-radius:{RADIUS_CARD};
+                    padding:12px 20px; text-align:center; min-width:140px;">
+          <div style="font-family:{FONT_BODY}; font-weight:600; color:{TEAL_DARK}; font-size:0.85rem;">EHR / Nurse Station</div>
+          <div style="font-family:{FONT_BODY}; color:{MUTED_TEXT}; font-size:0.7rem;">Clinical alerting</div>
+        </div>
+      </div>
+    </div>
+    """
+    st.markdown(section_card("Message Route", route_html,
+        subtitle="Rhapsody-style HL7v2 message flow — admission to clinical alerting"),
+        unsafe_allow_html=True)
+
+    # --- HL7 Messages (tabbed) + Patient Details ---
+    col_msg, col_details = st.columns([3, 2])
+
+    with col_msg:
+        tab_adt, tab_ack, tab_oru = st.tabs(["ADT^A01 (Input)", "ACK^A01 (Response)", "ORU^R01 (Output)"])
+        with tab_adt:
+            st.markdown(hl7_message_html(adt_msg, "ADT^A01 — Patient Admission"), unsafe_allow_html=True)
+        with tab_ack:
+            st.markdown(hl7_message_html(ack_msg, "ACK^A01 — Acknowledgment"), unsafe_allow_html=True)
+        with tab_oru:
+            st.markdown(hl7_message_html(oru_msg, "ORU^R01 — Observation Result"), unsafe_allow_html=True)
+
+    with col_details:
+        # Patient details card
+        details = {
+            "Baby ID": trace.baby.baby_id,
+            "GA": f"{trace.baby.gestational_age_weeks}w ({trace.baby.ga_category})",
+            "Birth weight": f"{trace.baby.birth_weight_grams}g",
+            "Days since birth": trace.baby.days_since_birth,
+            "Conditions": ", ".join(trace.baby.known_conditions) or "None",
+            "Pipeline label": final_label,
+            "Mean SpO2": f"{np.mean(trace.spo2):.1f}%",
+            "Min SpO2": f"{np.min(trace.spo2):.0f}%",
+        }
+        details_html = "".join(detail_row_html(k, str(v)) for k, v in details.items())
+        st.markdown(section_card(
+            "Patient Details", details_html,
+            subtitle="Baby demographics for HL7 message generation",
+        ), unsafe_allow_html=True)
+
+        # Urgency badge
+        st.markdown(urgency_badge_html(handoff.urgency_level), unsafe_allow_html=True)
+
+        # Round-trip validation card
+        rt_rows = ""
+        rt_fields = [
+            ("baby_id", trace.baby.baby_id, parsed_baby.baby_id),
+            ("ga_weeks", str(trace.baby.gestational_age_weeks), str(parsed_baby.gestational_age_weeks)),
+            ("birth_weight", str(trace.baby.birth_weight_grams), str(parsed_baby.birth_weight_grams)),
+            ("spo2_baseline", f"{trace.baby.spo2_baseline:.1f}", f"{parsed_baby.spo2_baseline:.1f}"),
+            ("ga_category", trace.baby.ga_category, parsed_baby.ga_category),
+        ]
+        for field, orig, parsed in rt_fields:
+            match = orig == parsed
+            icon = f'<span style="color:{TEAL_PRIMARY};">&#10003;</span>' if match else f'<span style="color:{URGENT_RED};">&#10007;</span>'
+            rt_rows += (
+                f'<div style="display:flex; justify-content:space-between; padding:4px 0; '
+                f'border-bottom:1px solid {BORDER}; font-size:0.8rem; font-family:{FONT_BODY};">'
+                f'<span style="color:{MUTED_TEXT};">{field}</span>'
+                f'<span style="color:{BODY_TEXT};">{orig} {icon}</span>'
+                f'</div>'
+            )
+        st.markdown(section_card(
+            "Round-Trip Validation",
+            rt_rows,
+            subtitle="ADT → parse → BabyProfile field comparison",
+        ), unsafe_allow_html=True)
+
+    # --- Segment Mapping Reference ---
+    with st.expander("HL7 Segment Mapping Reference"):
+        mapping_rows = [
+            ("PID-3", "Patient ID", "baby.baby_id", "Medical record number"),
+            ("PID-7", "Date of Birth", "computed from days_since_birth", "HL7 format YYYYMMDD"),
+            ("OBX-3", "Observation ID", "LOINC 59408-5", "Pulse oximetry observation"),
+            ("OBX-5", "Mean SpO2", "np.mean(trace.spo2)", "Overnight mean saturation"),
+            ("OBX-8", "Abnormal Flags", "urgency → AA/A/H/N", "Drives clinical alerting rules"),
+            ("OBX-14", "Observation Time", "trace.timestamp_start", "Audit trail timestamp"),
+            ("OBR-4", "Service ID", "LOINC 59408-5", "Overnight SpO2 monitoring order"),
+            ("NTE-3", "Comment", "handoff.summary_text", "Nurse handoff narrative"),
+            ("DG1-3", "Diagnosis", "ICD-10 (P28.4, P27.1)", "Known neonatal conditions"),
+            ("MSA-1", "ACK Code", "AA (accepted)", "Rhapsody handshake confirmation"),
+        ]
+
+        thead = "".join(
+            f'<th style="text-align:left; padding:10px 12px; background:{SAGE_BG}; '
+            f'color:{TEAL_DARK}; font-weight:600; font-family:{FONT_BODY}; '
+            f'font-size:0.8rem; border-bottom:1px solid {BORDER};">{h}</th>'
+            for h in ["HL7 Field", "Name", "Pipeline Source", "Description"]
+        )
+        tbody = ""
+        for field, name, source, desc in mapping_rows:
+            tbody += (
+                f'<tr><td style="padding:8px 12px; border-bottom:1px solid {BORDER}; '
+                f'color:{TEAL_DARK}; font-weight:500; font-family:monospace; font-size:0.82rem;">{field}</td>'
+                f'<td style="padding:8px 12px; border-bottom:1px solid {BORDER}; '
+                f'color:{BODY_TEXT}; font-family:{FONT_BODY}; font-size:0.82rem;">{name}</td>'
+                f'<td style="padding:8px 12px; border-bottom:1px solid {BORDER}; '
+                f'color:{MUTED_TEXT}; font-family:monospace; font-size:0.78rem;">{source}</td>'
+                f'<td style="padding:8px 12px; border-bottom:1px solid {BORDER}; '
+                f'color:{BODY_TEXT}; font-family:{FONT_BODY}; font-size:0.82rem;">{desc}</td>'
+                f'</tr>'
+            )
+        mapping_table = (
+            f'<table style="width:100%; border-collapse:collapse;">'
+            f'<thead><tr>{thead}</tr></thead><tbody>{tbody}</tbody></table>'
+        )
+        st.markdown(mapping_table, unsafe_allow_html=True)
+
+    # --- Production Considerations ---
+    with st.expander("Production Considerations"):
+        prod_items = [
+            ("ACK/NAK Handling",
+             "Rhapsody retries on NAK (negative acknowledgment), routes to error queue "
+             "after N consecutive failures. Production systems require configurable retry "
+             "policies with exponential backoff."),
+            ("IHE PCD-01 Profile",
+             "Patient Care Device observation — the IHE interoperability standard for "
+             "pulse oximetry and physiological monitoring data. Defines message structure, "
+             "device identity, and observation grouping requirements."),
+            ("PHI Encryption",
+             "TLS 1.2+ required for HL7 messages in transit per HIPAA Security Rule. "
+             "Message-level encryption at rest. Audit logging of all message exchanges "
+             "with timestamps and user identity."),
+            ("Error Queue Routing",
+             "Failed messages route to a dead letter queue for manual review. Rhapsody "
+             "provides error visualization, message replay, and alerting when queue depth "
+             "exceeds thresholds."),
+            ("Conformance Validation",
+             "HL7 message structure validation against hospital-specific conformance "
+             "profiles. Each receiving system defines required/optional segments and fields. "
+             "Rhapsody validates before routing."),
+            ("Batch vs Real-Time",
+             "Overnight SpO2 = batch ORU (single message per night). Rhapsody also supports "
+             "real-time streaming for continuous monitoring — ORU messages every N seconds "
+             "with waveform data in OBX segments."),
+        ]
+
+        prod_html = ""
+        for title, desc in prod_items:
+            prod_html += (
+                f'<div style="margin-bottom:14px; padding-left:12px; '
+                f'border-left:3px solid {SAGE};">'
+                f'<div style="font-family:{FONT_BODY}; font-weight:600; color:{TEAL_DARK}; '
+                f'font-size:0.85rem; margin-bottom:4px;">{title}</div>'
+                f'<div style="font-family:{FONT_BODY}; color:{BODY_TEXT}; '
+                f'font-size:0.82rem; line-height:1.5;">{desc}</div>'
+                f'</div>'
+            )
+
+        st.markdown(prod_html, unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------

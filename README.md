@@ -18,6 +18,8 @@ Expert Queue (2.7%) ── Simulated clinical review
 Handoff Generator ── 5 templates (emergency/urgent/monitor/routine/artifact)
     ↓
 LLM Evaluators ── Clinical accuracy, handoff quality, artifact handling
+    ↓
+HL7v2 Interop ── ADT^A01 input, ACK^A01 handshake, ORU^R01 output (Rhapsody-ready)
 ```
 
 ## Key Features
@@ -27,7 +29,8 @@ LLM Evaluators ── Clinical accuracy, handoff quality, artifact handling
 - **Emergency tier**: SpO2 <80% sustained triggers "call 911" action
 - **SatSeconds metric**: quantifies hypoxemic burden (integral of depth x duration below threshold)
 - **LLM-as-judge evals**: 3 evaluators with few-shot prompts, mock/live modes
-- **Streamlit dashboard**: 6 views with custom theming, per-label metrics
+- **HL7v2 interoperability**: ADT^A01 admission, ACK^A01 handshake, ORU^R01 results — Rhapsody-ready
+- **Streamlit dashboard**: 7 views with custom theming, per-label metrics, interop demo
 
 ## Results
 
@@ -54,8 +57,8 @@ python -m src.pipeline.orchestrator
 # Run dashboard
 streamlit run app/dashboard.py
 
-# Run safety tests
-python -m pytest tests/test_safety_check.py -v
+# Run all tests (safety + interop)
+python -m pytest tests/ -v
 ```
 
 ## Project Structure
@@ -72,6 +75,7 @@ src/
 │   ├── tier2.py              # Logistic regression classifier
 │   └── expert_sim.py         # Simulated expert review
 ├── handoff/generator.py      # Nurse handoff templates
+├── interop/hl7_messages.py   # HL7v2 ADT/ACK/ORU message builders
 ├── evals/
 │   ├── clinical_accuracy.py  # LLM evaluator: triage correctness
 │   ├── handoff_quality.py    # LLM evaluator: handoff content
@@ -79,10 +83,11 @@ src/
 ├── pipeline/orchestrator.py  # End-to-end orchestrator
 └── llm_utils.py              # Claude API client + cost tracker
 app/
-├── dashboard.py              # Streamlit dashboard (6 views)
-└── theme.py                  # Dashboard theme module
+├── dashboard.py              # Streamlit dashboard (7 views + interop)
+└── theme.py                  # Dashboard theme module + HL7 display
 tests/
-└── test_safety_check.py      # 6 safety-critical tests
+├── test_safety_check.py      # 6 safety-critical tests
+└── test_interop.py           # 9 HL7 interop tests
 ```
 
 ## Live Eval Mode

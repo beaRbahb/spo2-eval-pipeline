@@ -492,3 +492,53 @@ When adding a new classification tier to the pipeline, update ground truth label
 Clinical accuracy evaluator `max_tokens` bumped 300→500. Same truncation bug as handoff quality (LEARNINGS #10) — Claude's reasoning exceeds 300 tokens, JSON gets cut off, `parse_eval_response` defaults to "Fail."
 
 **File:** `src/data_gen/synthetic.py:431-434`, `src/evals/clinical_accuracy.py:92`
+
+---
+
+## 21. HL7v2 Interoperability Layer: Rhapsody-Ready Message Exchange
+
+### What we built
+Added a complete HL7v2 interoperability layer to demonstrate EHR integration readiness. Three message types hand-crafted without external HL7 libraries:
+
+- **ADT^A01 (Patient Admission)** — Maps BabyProfile to standard HL7 segments (MSH, EVN, PID, PV1, OBX, DG1). Includes LOINC 59408-5 for baseline SpO2, local codes for GA weeks and birth weight, and ICD-10 codes for known conditions (P28.4 for apnea, P27.1 for BPD).
+
+- **ACK^A01 (Acknowledgment)** — Demonstrates the full HL7 handshake pattern. Rhapsody expects an ACK before marking a message as delivered. MSA-1=AA (application accept) with reference to the original message control ID.
+
+- **ORU^R01 (Observation Result)** — Maps pipeline output to clinical observations. 6 OBX segments: mean SpO2 (LOINC), min SpO2, triage label, urgency level, SatSeconds burden, desat event count. OBX-8 abnormal flags (AA/A/H/N) drive clinical alerting in the receiving EHR. Handoff summary text splits across NTE segments at 200-char boundaries (real Rhapsody routes choke on long NTE segments).
+
+- **Round-trip parser** — `parse_adt_a01()` extracts BabyProfile from the ADT message, proving the messages are structurally valid, not just string templates.
+
+### Design decisions
+
+**Hand-crafted vs library:** Used no external HL7 libraries (python-hl7, hl7apy). Hand-crafting the pipe-delimited messages demonstrates deeper understanding of the standard — interviewers who've worked with Rhapsody will recognize the MSH-1 encoding quirk (field separator is the first field itself, offsetting all subsequent indexing).
+
+**Abnormal flags mapping:** EMERGENCY→AA (critical abnormal), URGENT→A (abnormal), MONITOR→H (above high normal), ROUTINE→N (normal). This is the mechanism that drives clinical alerting rules in EHR systems — a nurse station receiving an OBX-8=AA triggers an immediate alert.
+
+**ICD-10 for conditions:** Mapped known_conditions to real ICD-10 codes rather than local codes. Adds <10 lines of code but shows clinical coding knowledge.
+
+**NTE splitting:** HL7 NTE-3 has a practical ~200 character limit per segment. Long handoff summaries split across multiple NTE segments at sentence boundaries — a real-world Rhapsody gotcha that trips up systems that dump full text into a single NTE.
+
+### Dashboard page
+
+New "Interoperability" view with:
+- Route diagram showing message flow (NICU Monitor → Rhapsody → Pipeline → Rhapsody → EHR/Nurse Station)
+- Tabbed message display with syntax-highlighted HL7 (segment IDs color-coded by type)
+- Round-trip validation card (ADT → parse → BabyProfile field comparison)
+- Segment mapping reference table
+- Production considerations callout (ACK/NAK handling, IHE PCD-01, PHI encryption, error queues, conformance validation, batch vs real-time)
+
+### Production considerations (documented but not built)
+
+The dashboard page includes a collapsible section listing what a real deployment would need:
+1. ACK/NAK handling with retry policies
+2. IHE PCD-01 profile compliance (Patient Care Device observation standard)
+3. PHI encryption (TLS 1.2+ in transit, message-level at rest)
+4. Error queue routing (dead letter queue → manual review)
+5. Conformance validation against hospital-specific profiles
+6. Batch vs real-time ORU routing
+
+### Testing
+
+9 tests covering structure, encoding, round-trip parsing, ACK handshake, LOINC codes, abnormal flag mapping, and HL7 special character escaping. All passing.
+
+**Files:** `src/interop/hl7_messages.py`, `app/dashboard.py` (Interoperability page), `app/theme.py` (hl7_message_html), `tests/test_interop.py`
