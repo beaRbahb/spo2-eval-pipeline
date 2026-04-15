@@ -468,3 +468,27 @@ All P1 (safety-critical) and P2 (clinical accuracy) fixes from #13 are working c
 Same as #13 — biostatistician (sample size), regulatory (IEC 62304), human factors (nurse workflow), biomedical engineer (PPG/SQI), data scientist (Tier 2 features).
 
 **Files:** `src/handoff/generator.py`, `src/pipeline/orchestrator.py`
+
+---
+
+## 20. Ground Truth Label Lag: The Emergency Gap
+
+### What happened
+After adding the emergency tier (LEARNINGS #15), the synthetic data generator still only produced 4 ground truth labels: normal, urgent, borderline, artifact. The pipeline correctly classified SpO2 <80% traces as "emergency," but the ground truth said "urgent." Every emergency trace was scored as a misclassification, dragging down reported accuracy.
+
+### Impact
+- Overall accuracy reported as 76.3% — actually 88.3% after fix
+- Tier 1 accuracy reported as 75.3% — actually 96.0%
+- Mock evaluators failed every GT=urgent/assigned=emergency trace
+- Live clinical accuracy evaluator also failed some of these due to the mismatch
+
+### The fix
+Added a post-generation label refinement in `generate_trace()`: if the pattern is "urgent" and `np.min(spo2) < 80`, the ground truth label is set to "emergency." This is correct because the urgent generator targets nadirs of 72-88% — traces below 80% genuinely are emergency-severity events.
+
+### The lesson
+When adding a new classification tier to the pipeline, update ground truth labels at the source. Otherwise every downstream metric — accuracy, eval pass rates, confusion matrices — is wrong in a way that's hard to diagnose because the numbers look plausibly bad rather than obviously broken.
+
+### Also fixed
+Clinical accuracy evaluator `max_tokens` bumped 300→500. Same truncation bug as handoff quality (LEARNINGS #10) — Claude's reasoning exceeds 300 tokens, JSON gets cut off, `parse_eval_response` defaults to "Fail."
+
+**File:** `src/data_gen/synthetic.py:431-434`, `src/evals/clinical_accuracy.py:92`

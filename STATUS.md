@@ -1,13 +1,13 @@
 # SpO2 Eval Pipeline — Status
 
-## Current State: Clinical Review Fixes Applied
+## Current State: V2.1 — Clinical Review Fixes + GT Labels
 **Last updated**: April 14, 2026
 
 ## Phase Tracker
 
 | Phase | Description | Status | Notes |
 |-------|-------------|--------|-------|
-| 1 | Synthetic Data Generator | Done | 300 traces (100 babies x 3 nights), 4 pattern types, GA-adjusted |
+| 1 | Synthetic Data Generator | Done | 300 traces (100 babies x 3 nights), 5 labels (incl. emergency), GA-adjusted |
 | 2 | Rule Engine (Tier 1) | Done (v2) | 58% auto-labeled, GA-adjusted thresholds, emergency tier, safety check |
 | 3 | Pattern Mining Layer | Done | 54 rules discovered (4 tree + 50 Apriori) |
 | 4 | Pre-Annotation Classifier (Tier 2) | Done | 39.3% coverage, expert queue 2.7%, with domain shift warnings |
@@ -15,13 +15,14 @@
 | 6 | Nurse Handoff Generator | Done | 5 templates (emergency/urgent/monitor/routine/artifact), SatSeconds |
 | 7 | Streamlit Dashboard | Done | 6 views, custom theming, per-label metrics, Tier 2 warnings |
 
-## Pipeline Coverage (v2 — post clinical review)
-- Tier 1 (rules): 58.0% (was 61.0%)
-- Tier 2 (classifier): 39.3% (was 31.3%)
-- Expert queue: 2.7% (was 7.7%)
-- Overall accuracy: 76.3% (was 68.3%)
-- **Urgent false negatives: 0** (was 2)
-- **Emergency cases detected: 36** (new tier)
+## Pipeline Metrics (v2.1 — post GT label fix)
+- Tier 1 (rules): 58.0%
+- Tier 2 (classifier): 39.3%
+- Expert queue: 2.7%
+- **Overall accuracy: 88.3%** (was 76.3% before GT fix, 68.3% v1)
+- **Tier 1 accuracy: 96.0%** (was 75.3% before GT fix)
+- Urgent false negatives: 0
+- Emergency cases detected: 36
 
 ## Live Eval Results
 
@@ -76,13 +77,14 @@ Live handoff quality regressed 90% → 30% and clinical accuracy dropped 80% →
 ## Known Issues
 - Tier 2 accuracy (76.3%) still reflects domain shift — trained on easy cases, tested on harder ones. Dashboard has warning callout.
 - Expert queue 100% accuracy is simulated oracle — dashboard footnote explains this.
-- Mock eval pass rates dropped (66-73%) due to ground truth not including "emergency" label. Live evals would assess correctly.
-- Handoff quality recovered to 80% after prompt fixes but hasn't reached v1's 90%. Remaining failures are legitimate edge cases (label mismatches where GT≠assigned).
+- Clinical accuracy evaluator still uses `trace.events` instead of rule engine events (handoff generator was fixed, evals not yet).
+- Handoff quality recovered to 80% after prompt fixes but hasn't reached v1's 90%. Remaining failures are legitimate edge cases (ROUTINE handoffs where Claude hedges action language).
 
 ## Next Actions
 - [x] Rerun live eval — handoff quality recovered 30% → 80%
-- [ ] Push to GitHub with README
-- [ ] Write 60-second interview talk track (update existing draft)
+- [x] Push to GitHub with README
+- [ ] Thread rule_events through evaluators (clinical_accuracy, artifact_handling)
+- [ ] Update interview talk track with v2 clinical review story
 
 ## How To Run
 ```bash
@@ -109,6 +111,11 @@ python -m pytest tests/test_safety_check.py -v
 4. `d050586` — Custom theming, CLAUDE.md
 5. `d5915b1` — Shared theme module
 6. `9b70781` — Dashboard polish
+7. `2175d4e` — V2 clinical fixes, README, remove brand references
+8. `68185e5` — Fix live handoff prompt, urgency parser, event source
+9. `fd04886` — Add timeframe requirement, fix markdown urgency parsing
+10. `442d0c2` — LEARNINGS.md #19 live eval rerun findings
+11. `864222b` — Emergency ground truth labels, clinical eval max_tokens fix
 
 ## Interview Talk Track
 _60 seconds — what this is, why, what you learned:_

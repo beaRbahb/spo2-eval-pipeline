@@ -33,11 +33,11 @@ LLM Evaluators ── Clinical accuracy, handoff quality, artifact handling
 
 | Metric | Value |
 |--------|-------|
-| Overall accuracy | 76.3% |
+| Overall accuracy | 88.3% |
+| Tier 1 accuracy | 96.0% |
 | Urgent false negatives | **0** |
 | Emergency cases detected | 36 |
-| Clinical accuracy (live eval) | 80% |
-| Handoff quality (live eval) | 90% |
+| Handoff quality (live eval) | 80% |
 | Artifact handling (live eval) | 100% |
 
 ## Quick Start
@@ -98,7 +98,7 @@ Cost: ~$0.15-0.35 for 10 traces. Hard cap at $1.00 enforced by `CostTracker`.
 ## Documentation
 
 - `STATUS.md` — Phase tracker, coverage metrics, known issues
-- `LEARNINGS.md` — 18 engineering notes for data science/engineering handoff
+- `LEARNINGS.md` — 20 engineering notes for data science/engineering handoff
 - `PLAN-clinical-fixes.md` — V2 clinical review fix implementation plan
 
 ## Tech Stack
