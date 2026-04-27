@@ -1,17 +1,20 @@
 """Export pipeline results to static JSON for the React dashboard.
 
-Runs the full mock pipeline (seed=42, 100 babies, 3 nights) and writes
-pre-computed results to data/export/. No API calls, deterministic, ~5s.
+Runs the full pipeline (100 babies, 3 nights) and writes pre-computed
+results to data/export/. No API calls, ~5s.
 
 Usage:
     cd spo2-eval-pipeline
     source venv/bin/activate
-    python scripts/export_dashboard_data.py
+    python scripts/export_dashboard_data.py           # random seed
+    python scripts/export_dashboard_data.py --seed 42 # reproducible
 """
 from __future__ import annotations
 
+import argparse
 import json
 import sys
+import time
 from collections import Counter
 from pathlib import Path
 
@@ -41,15 +44,21 @@ from src.evals.artifact_handling import evaluate_artifact_handling
 
 N_BABIES = 100
 NIGHTS = 3
-SEED = 42
 DOWNSAMPLE_STEP = 30  # 30s intervals → 960 points per 8h trace
 EXPORT_DIR = PROJECT_ROOT / "data" / "export"
 
 
-def run_pipeline():
+def parse_args():
+    parser = argparse.ArgumentParser(description="Export pipeline data to JSON")
+    parser.add_argument("--seed", type=int, default=None,
+                        help="RNG seed (omit for random)")
+    return parser.parse_args()
+
+
+def run_pipeline(seed: int):
     """Run the full mock pipeline and return all intermediate results."""
     print("Phase 1: Generating synthetic data...")
-    traces = generate_dataset(N_BABIES, NIGHTS, SEED)
+    traces = generate_dataset(N_BABIES, NIGHTS, seed)
 
     print("Phase 2: Running Tier 1 rules...")
     tier1_results, unlabeled = run_tier1(traces)
@@ -68,7 +77,7 @@ def run_pipeline():
         for r in tier2_results
         if r.trace_id == t.night_id and r.routed_to == "expert_queue"
     ]
-    expert_results = run_expert_queue(expert_traces, tier2_results, seed=SEED)
+    expert_results = run_expert_queue(expert_traces, tier2_results, seed=seed)
 
     # Build final label map
     final_labels = {}
@@ -98,7 +107,7 @@ def run_pipeline():
 
     # Run mock evals
     print("Phase 5: Running evaluators...")
-    rng = np.random.default_rng(SEED)
+    rng = np.random.default_rng(seed)
     eval_results = []
     for trace in traces:
         label = final_labels.get(trace.night_id, "normal")
@@ -546,13 +555,16 @@ def write_json(filepath: Path, data):
 
 
 def main():
+    args = parse_args()
+    seed = args.seed if args.seed is not None else int(time.time()) % 2**31
+
     print("=" * 60)
     print("SpO2 Eval Pipeline — Dashboard Data Export")
     print("=" * 60)
-    print(f"Config: {N_BABIES} babies, {NIGHTS} nights, seed={SEED}")
+    print(f"Config: {N_BABIES} babies, {NIGHTS} nights, seed={seed}")
     print()
 
-    data = run_pipeline()
+    data = run_pipeline(seed)
     print()
     print("Exporting JSON files...")
 
