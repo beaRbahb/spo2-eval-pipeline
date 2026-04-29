@@ -1,320 +1,320 @@
 {
-  "overall_pass_rate": 80.3,
+  "overall_pass_rate": 81.2,
   "overall_total": 900,
   "summary": {
     "clinical_accuracy": {
-      "pass_rate": 76.7,
+      "pass_rate": 74.3,
       "total": 300,
-      "pass_count": 230
+      "pass_count": 223
     },
     "handoff_quality": {
-      "pass_rate": 82.3,
+      "pass_rate": 86.3,
       "total": 300,
-      "pass_count": 247
+      "pass_count": 259
     },
     "artifact_handling": {
-      "pass_rate": 82.0,
+      "pass_rate": 83.0,
       "total": 300,
-      "pass_count": 246
+      "pass_count": 249
     }
   },
   "details": [
     {
-      "trace_id": "5aeeb6d6",
+      "trace_id": "992459ab",
       "evaluator": "clinical_accuracy",
       "answer": "Pass",
       "source": "mock"
     },
     {
-      "trace_id": "5aeeb6d6",
+      "trace_id": "992459ab",
       "evaluator": "handoff_quality",
       "answer": "Pass",
       "source": "mock"
     },
     {
-      "trace_id": "5aeeb6d6",
+      "trace_id": "992459ab",
       "evaluator": "artifact_handling",
       "answer": "Pass",
       "source": "mock"
     },
     {
-      "trace_id": "86ae5c70",
+      "trace_id": "2a58bfa9",
       "evaluator": "clinical_accuracy",
       "answer": "Pass",
       "source": "mock"
     },
     {
-      "trace_id": "86ae5c70",
+      "trace_id": "2a58bfa9",
       "evaluator": "handoff_quality",
       "answer": "Pass",
       "source": "mock"
     },
     {
-      "trace_id": "86ae5c70",
+      "trace_id": "2a58bfa9",
       "evaluator": "artifact_handling",
       "answer": "Pass",
       "source": "mock"
     },
     {
-      "trace_id": "2b5e99fd",
-      "evaluator": "clinical_accuracy",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "2b5e99fd",
-      "evaluator": "handoff_quality",
-      "answer": "Fail",
-      "source": "mock"
-    },
-    {
-      "trace_id": "2b5e99fd",
-      "evaluator": "artifact_handling",
-      "answer": "Fail",
-      "source": "mock"
-    },
-    {
-      "trace_id": "5c150cd1",
-      "evaluator": "clinical_accuracy",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "5c150cd1",
-      "evaluator": "handoff_quality",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "5c150cd1",
-      "evaluator": "artifact_handling",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "03b44f9a",
-      "evaluator": "clinical_accuracy",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "03b44f9a",
-      "evaluator": "handoff_quality",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "03b44f9a",
-      "evaluator": "artifact_handling",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "a325033a",
-      "evaluator": "clinical_accuracy",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "a325033a",
-      "evaluator": "handoff_quality",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "a325033a",
-      "evaluator": "artifact_handling",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "88e52917",
+      "trace_id": "389a6558",
       "evaluator": "clinical_accuracy",
       "answer": "Fail",
       "source": "mock"
     },
     {
-      "trace_id": "88e52917",
+      "trace_id": "389a6558",
       "evaluator": "handoff_quality",
-      "answer": "Fail",
+      "answer": "Pass",
       "source": "mock"
     },
     {
-      "trace_id": "88e52917",
+      "trace_id": "389a6558",
       "evaluator": "artifact_handling",
-      "answer": "Fail",
+      "answer": "Pass",
       "source": "mock"
     },
     {
-      "trace_id": "4fdb6900",
+      "trace_id": "eed7efe9",
       "evaluator": "clinical_accuracy",
       "answer": "Fail",
       "source": "mock"
     },
     {
-      "trace_id": "4fdb6900",
-      "evaluator": "handoff_quality",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "4fdb6900",
-      "evaluator": "artifact_handling",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "4f57ee0c",
-      "evaluator": "clinical_accuracy",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "4f57ee0c",
+      "trace_id": "eed7efe9",
       "evaluator": "handoff_quality",
       "answer": "Fail",
       "source": "mock"
     },
     {
-      "trace_id": "4f57ee0c",
-      "evaluator": "artifact_handling",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "724bde4a",
-      "evaluator": "clinical_accuracy",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "724bde4a",
-      "evaluator": "handoff_quality",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "724bde4a",
-      "evaluator": "artifact_handling",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "e3b20aac",
-      "evaluator": "clinical_accuracy",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "e3b20aac",
-      "evaluator": "handoff_quality",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "e3b20aac",
-      "evaluator": "artifact_handling",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "d87e0f5e",
-      "evaluator": "clinical_accuracy",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "d87e0f5e",
-      "evaluator": "handoff_quality",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "d87e0f5e",
-      "evaluator": "artifact_handling",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "b205f1ec",
-      "evaluator": "clinical_accuracy",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "b205f1ec",
-      "evaluator": "handoff_quality",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "b205f1ec",
-      "evaluator": "artifact_handling",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "9b641f40",
-      "evaluator": "clinical_accuracy",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "9b641f40",
-      "evaluator": "handoff_quality",
-      "answer": "Pass",
-      "source": "mock"
-    },
-    {
-      "trace_id": "9b641f40",
+      "trace_id": "eed7efe9",
       "evaluator": "artifact_handling",
       "answer": "Fail",
       "source": "mock"
     },
     {
-      "trace_id": "44616d7b",
+      "trace_id": "4f2c6ce3",
       "evaluator": "clinical_accuracy",
       "answer": "Pass",
       "source": "mock"
     },
     {
-      "trace_id": "44616d7b",
+      "trace_id": "4f2c6ce3",
       "evaluator": "handoff_quality",
       "answer": "Pass",
       "source": "mock"
     },
     {
-      "trace_id": "44616d7b",
+      "trace_id": "4f2c6ce3",
       "evaluator": "artifact_handling",
       "answer": "Pass",
       "source": "mock"
     },
     {
-      "trace_id": "46b2a43d",
+      "trace_id": "dc0fe7ee",
+      "evaluator": "clinical_accuracy",
+      "answer": "Fail",
+      "source": "mock"
+    },
+    {
+      "trace_id": "dc0fe7ee",
+      "evaluator": "handoff_quality",
+      "answer": "Fail",
+      "source": "mock"
+    },
+    {
+      "trace_id": "dc0fe7ee",
+      "evaluator": "artifact_handling",
+      "answer": "Fail",
+      "source": "mock"
+    },
+    {
+      "trace_id": "8ebb5418",
       "evaluator": "clinical_accuracy",
       "answer": "Pass",
       "source": "mock"
     },
     {
-      "trace_id": "46b2a43d",
+      "trace_id": "8ebb5418",
       "evaluator": "handoff_quality",
       "answer": "Pass",
       "source": "mock"
     },
     {
-      "trace_id": "46b2a43d",
+      "trace_id": "8ebb5418",
       "evaluator": "artifact_handling",
       "answer": "Pass",
       "source": "mock"
     },
     {
-      "trace_id": "00e67df0",
+      "trace_id": "f5631055",
+      "evaluator": "clinical_accuracy",
+      "answer": "Fail",
+      "source": "mock"
+    },
+    {
+      "trace_id": "f5631055",
+      "evaluator": "handoff_quality",
+      "answer": "Pass",
+      "source": "mock"
+    },
+    {
+      "trace_id": "f5631055",
+      "evaluator": "artifact_handling",
+      "answer": "Pass",
+      "source": "mock"
+    },
+    {
+      "trace_id": "5dc3b25d",
       "evaluator": "clinical_accuracy",
       "answer": "Pass",
       "source": "mock"
     },
     {
-      "trace_id": "00e67df0",
+      "trace_id": "5dc3b25d",
+      "evaluator": "handoff_quality",
+      "answer": "Pass",
+      "source": "mock"
+    },
+    {
+      "trace_id": "5dc3b25d",
+      "evaluator": "artifact_handling",
+      "answer": "Pass",
+      "source": "mock"
+    },
+    {
+      "trace_id": "d3041362",
+      "evaluator": "clinical_accuracy",
+      "answer": "Pass",
+      "source": "mock"
+    },
+    {
+      "trace_id": "d3041362",
+      "evaluator": "handoff_quality",
+      "answer": "Pass",
+      "source": "mock"
+    },
+    {
+      "trace_id": "d3041362",
+      "evaluator": "artifact_handling",
+      "answer": "Pass",
+      "source": "mock"
+    },
+    {
+      "trace_id": "58925b09",
+      "evaluator": "clinical_accuracy",
+      "answer": "Pass",
+      "source": "mock"
+    },
+    {
+      "trace_id": "58925b09",
+      "evaluator": "handoff_quality",
+      "answer": "Pass",
+      "source": "mock"
+    },
+    {
+      "trace_id": "58925b09",
+      "evaluator": "artifact_handling",
+      "answer": "Pass",
+      "source": "mock"
+    },
+    {
+      "trace_id": "e8b2c2c6",
+      "evaluator": "clinical_accuracy",
+      "answer": "Pass",
+      "source": "mock"
+    },
+    {
+      "trace_id": "e8b2c2c6",
+      "evaluator": "handoff_quality",
+      "answer": "Pass",
+      "source": "mock"
+    },
+    {
+      "trace_id": "e8b2c2c6",
+      "evaluator": "artifact_handling",
+      "answer": "Fail",
+      "source": "mock"
+    },
+    {
+      "trace_id": "50e6bcef",
+      "evaluator": "clinical_accuracy",
+      "answer": "Pass",
+      "source": "mock"
+    },
+    {
+      "trace_id": "50e6bcef",
+      "evaluator": "handoff_quality",
+      "answer": "Pass",
+      "source": "mock"
+    },
+    {
+      "trace_id": "50e6bcef",
+      "evaluator": "artifact_handling",
+      "answer": "Pass",
+      "source": "mock"
+    },
+    {
+      "trace_id": "c7c55e2a",
+      "evaluator": "clinical_accuracy",
+      "answer": "Pass",
+      "source": "mock"
+    },
+    {
+      "trace_id": "c7c55e2a",
+      "evaluator": "handoff_quality",
+      "answer": "Pass",
+      "source": "mock"
+    },
+    {
+      "trace_id": "c7c55e2a",
+      "evaluator": "artifact_handling",
+      "answer": "Pass",
+      "source": "mock"
+    },
+    {
+      "trace_id": "8c60ba01",
+      "evaluator": "clinical_accuracy",
+      "answer": "Pass",
+      "source": "mock"
+    },
+    {
+      "trace_id": "8c60ba01",
+      "evaluator": "handoff_quality",
+      "answer": "Pass",
+      "source": "mock"
+    },
+    {
+      "trace_id": "8c60ba01",
+      "evaluator": "artifact_handling",
+      "answer": "Pass",
+      "source": "mock"
+    },
+    {
+      "trace_id": "08f7f849",
+      "evaluator": "clinical_accuracy",
+      "answer": "Pass",
+      "source": "mock"
+    },
+    {
+      "trace_id": "08f7f849",
+      "evaluator": "handoff_quality",
+      "answer": "Pass",
+      "source": "mock"
+    },
+    {
+      "trace_id": "08f7f849",
+      "evaluator": "artifact_handling",
+      "answer": "Pass",
+      "source": "mock"
+    },
+    {
+      "trace_id": "228d44f5",
+      "evaluator": "clinical_accuracy",
+      "answer": "Fail",
+      "source": "mock"
+    },
+    {
+      "trace_id": "228d44f5",
       "evaluator": "handoff_quality",
       "answer": "Pass",
       "source": "mock"

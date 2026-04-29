@@ -9,7 +9,7 @@ Next: live eval on v2 → GitHub push with README.
 - `STATUS.md` — phase tracker, known issues, next actions, interview talk track
 - `LEARNINGS.md` — engineering notes for handoff (preterm baseline problem, Tier 2 accuracy gap, etc.)
 - `src/pipeline/orchestrator.py` — end-to-end pipeline entry point
-- `app/dashboard.py` — Streamlit dashboard (6 views)
+- `app/dashboard.py` — Streamlit dashboard (7 views)
 - `.streamlit/config.toml` — Dashboard theme colors
 
 ## Tech Stack

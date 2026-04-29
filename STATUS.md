@@ -88,7 +88,7 @@ Live handoff quality regressed 90% → 30% and clinical accuracy dropped 80% →
 
 ## How To Run
 ```bash
-cd /Users/Sterdb/pm-os/projects/spo2-eval-pipeline
+cd ~/spo2-eval-pipeline
 source venv/bin/activate
 
 # Full pipeline (mock mode, $0)

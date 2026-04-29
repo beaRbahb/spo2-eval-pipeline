@@ -6,241 +6,241 @@
     {
       "rule_id": "AP-001",
       "source": "apriori",
-      "description": "high_desat_accel_corr → artifact",
+      "description": "any_below_90 AND high_desat_accel_corr → artifact",
       "confidence": 1.0,
-      "support": 66,
+      "support": 52,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-002",
       "source": "apriori",
-      "description": "any_below_90 AND high_desat_accel_corr → artifact",
+      "description": "any_below_90 AND high_accel AND high_desat_accel_corr → artifact",
       "confidence": 1.0,
-      "support": 66,
+      "support": 49,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-003",
       "source": "apriori",
-      "description": "high_accel AND high_desat_accel_corr → artifact",
+      "description": "any_below_90 AND deep_desat AND high_desat_accel_corr → artifact",
       "confidence": 1.0,
-      "support": 60,
+      "support": 32,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-004",
       "source": "apriori",
-      "description": "any_below_90 AND high_accel AND high_desat_accel_corr → artifact",
+      "description": "any_below_90 AND deep_desat AND high_accel AND high_desat_accel_corr → artifact",
       "confidence": 1.0,
-      "support": 60,
+      "support": 31,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-005",
       "source": "apriori",
-      "description": "deep_desat AND high_desat_accel_corr → artifact",
+      "description": "high_desat_accel_corr AND high_pct_below_94 → artifact",
       "confidence": 1.0,
-      "support": 49,
+      "support": 27,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-006",
       "source": "apriori",
-      "description": "any_below_90 AND deep_desat AND high_desat_accel_corr → artifact",
+      "description": "any_below_90 AND high_desat_accel_corr AND high_pct_below_94 → artifact",
       "confidence": 1.0,
-      "support": 49,
+      "support": 27,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-007",
       "source": "apriori",
-      "description": "any_below_90 AND deep_desat AND high_accel → artifact",
+      "description": "high_desat_accel_corr AND low_mean_spo2 → artifact",
       "confidence": 1.0,
-      "support": 48,
+      "support": 25,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-008",
       "source": "apriori",
-      "description": "deep_desat AND high_accel AND high_desat_accel_corr → artifact",
+      "description": "any_below_90 AND high_desat_accel_corr AND low_mean_spo2 → artifact",
       "confidence": 1.0,
-      "support": 48,
+      "support": 25,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-009",
       "source": "apriori",
-      "description": "any_below_90 AND deep_desat AND high_accel AND high_desat_accel_corr → artifact",
+      "description": "high_accel AND high_desat_accel_corr AND high_pct_below_94 → artifact",
       "confidence": 1.0,
-      "support": 48,
+      "support": 25,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-010",
       "source": "apriori",
-      "description": "high_desat_accel_corr AND high_pct_below_94 → artifact",
+      "description": "high_desat_accel_corr AND high_pct_below_94 AND low_mean_spo2 → artifact",
       "confidence": 1.0,
-      "support": 34,
+      "support": 25,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-011",
       "source": "apriori",
-      "description": "any_below_90 AND high_desat_accel_corr AND high_pct_below_94 → artifact",
+      "description": "any_below_90 AND high_accel AND high_desat_accel_corr AND high_pct_below_94 → artifact",
       "confidence": 1.0,
-      "support": 34,
+      "support": 25,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-012",
       "source": "apriori",
-      "description": "high_accel AND high_desat_accel_corr AND high_pct_below_94 → artifact",
+      "description": "any_below_90 AND high_desat_accel_corr AND high_pct_below_94 AND low_mean_spo2 → artifact",
       "confidence": 1.0,
-      "support": 31,
+      "support": 25,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-013",
       "source": "apriori",
-      "description": "any_below_90 AND high_accel AND high_desat_accel_corr AND high_pct_below_94 → artifact",
+      "description": "high_accel AND high_desat_accel_corr AND low_mean_spo2 → artifact",
       "confidence": 1.0,
-      "support": 31,
+      "support": 23,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-014",
       "source": "apriori",
-      "description": "high_desat_accel_corr AND low_mean_spo2 → artifact",
+      "description": "any_below_90 AND high_accel AND high_desat_accel_corr AND low_mean_spo2 → artifact",
       "confidence": 1.0,
-      "support": 28,
+      "support": 23,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-015",
       "source": "apriori",
-      "description": "any_below_90 AND high_desat_accel_corr AND low_mean_spo2 → artifact",
+      "description": "high_accel AND high_desat_accel_corr AND high_pct_below_94 AND low_mean_spo2 → artifact",
       "confidence": 1.0,
-      "support": 28,
+      "support": 23,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-016",
       "source": "apriori",
-      "description": "deep_desat AND high_desat_accel_corr AND high_pct_below_94 → artifact",
+      "description": "any_below_90 AND high_accel AND high_desat_accel_corr AND high_pct_below_94 AND low_mean_spo2 → artifact",
       "confidence": 1.0,
-      "support": 28,
+      "support": 23,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-017",
       "source": "apriori",
-      "description": "high_desat_accel_corr AND high_pct_below_94 AND low_mean_spo2 → artifact",
+      "description": "ga_very_preterm AND high_desat_accel_corr → artifact",
       "confidence": 1.0,
-      "support": 28,
+      "support": 22,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-018",
       "source": "apriori",
-      "description": "any_below_90 AND deep_desat AND high_desat_accel_corr AND high_pct_below_94 → artifact",
+      "description": "any_below_90 AND ga_very_preterm AND high_desat_accel_corr → artifact",
       "confidence": 1.0,
-      "support": 28,
+      "support": 22,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-019",
       "source": "apriori",
-      "description": "any_below_90 AND high_desat_accel_corr AND high_pct_below_94 AND low_mean_spo2 → artifact",
+      "description": "ga_very_preterm AND high_desat_accel_corr AND high_pct_below_94 → artifact",
       "confidence": 1.0,
-      "support": 28,
+      "support": 22,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-020",
       "source": "apriori",
-      "description": "deep_desat AND high_accel AND high_pct_below_94 → artifact",
+      "description": "any_below_90 AND ga_very_preterm AND high_desat_accel_corr AND high_pct_below_94 → artifact",
       "confidence": 1.0,
-      "support": 27,
+      "support": 22,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-021",
       "source": "apriori",
-      "description": "any_below_90 AND deep_desat AND high_accel AND high_pct_below_94 → artifact",
+      "description": "high_accel AND long_desat → borderline",
       "confidence": 1.0,
-      "support": 27,
-      "consequent": "artifact"
+      "support": 21,
+      "consequent": "borderline"
     },
     {
       "rule_id": "AP-022",
       "source": "apriori",
-      "description": "deep_desat AND high_accel AND high_desat_accel_corr AND high_pct_below_94 → artifact",
+      "description": "ga_very_preterm AND high_desat_accel_corr AND low_mean_spo2 → artifact",
       "confidence": 1.0,
-      "support": 27,
+      "support": 21,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-023",
       "source": "apriori",
-      "description": "any_below_90 AND deep_desat AND high_accel AND high_desat_accel_corr AND high_pct_below_94 → artifact",
+      "description": "any_below_90 AND ga_very_preterm AND high_desat_accel_corr AND low_mean_spo2 → artifact",
       "confidence": 1.0,
-      "support": 27,
+      "support": 21,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-024",
       "source": "apriori",
-      "description": "ga_very_preterm AND high_desat_accel_corr → artifact",
+      "description": "ga_very_preterm AND high_desat_accel_corr AND high_pct_below_94 AND low_mean_spo2 → artifact",
       "confidence": 1.0,
-      "support": 25,
+      "support": 21,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-025",
       "source": "apriori",
-      "description": "any_below_90 AND ga_very_preterm AND high_desat_accel_corr → artifact",
+      "description": "any_below_90 AND ga_very_preterm AND high_desat_accel_corr AND high_pct_below_94 AND low_mean_spo2 → artifact",
       "confidence": 1.0,
-      "support": 25,
+      "support": 21,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-026",
       "source": "apriori",
-      "description": "ga_very_preterm AND high_desat_accel_corr AND high_pct_below_94 → artifact",
+      "description": "ga_very_preterm AND high_accel AND high_desat_accel_corr → artifact",
       "confidence": 1.0,
-      "support": 25,
+      "support": 20,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-027",
       "source": "apriori",
-      "description": "ga_very_preterm AND high_desat_accel_corr AND low_mean_spo2 → artifact",
+      "description": "any_below_90 AND ga_very_preterm AND high_accel AND high_desat_accel_corr → artifact",
       "confidence": 1.0,
-      "support": 25,
+      "support": 20,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-028",
       "source": "apriori",
-      "description": "high_accel AND high_desat_accel_corr AND low_mean_spo2 → artifact",
+      "description": "ga_very_preterm AND high_accel AND high_desat_accel_corr AND high_pct_below_94 → artifact",
       "confidence": 1.0,
-      "support": 25,
+      "support": 20,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-029",
       "source": "apriori",
-      "description": "any_below_90 AND ga_very_preterm AND high_desat_accel_corr AND high_pct_below_94 → artifact",
+      "description": "any_below_90 AND ga_very_preterm AND high_accel AND high_desat_accel_corr AND high_pct_below_94 → artifact",
       "confidence": 1.0,
-      "support": 25,
+      "support": 20,
       "consequent": "artifact"
     },
     {
       "rule_id": "AP-030",
       "source": "apriori",
-      "description": "any_below_90 AND ga_very_preterm AND high_desat_accel_corr AND low_mean_spo2 → artifact",
+      "description": "ga_very_preterm AND high_accel AND high_desat_accel_corr AND low_mean_spo2 → artifact",
       "confidence": 1.0,
-      "support": 25,
+      "support": 19,
       "consequent": "artifact"
     }
   ],
@@ -251,15 +251,15 @@
     },
     {
       "feature": "sat_seconds",
-      "importance": 76.7
+      "importance": 61.9
     },
     {
       "feature": "mean_desat_duration",
-      "importance": 48.7
+      "importance": 45.7
     },
     {
       "feature": "min_spo2",
-      "importance": 2.1
+      "importance": 7.4
     }
   ]
 }
