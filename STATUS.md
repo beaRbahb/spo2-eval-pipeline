@@ -26,6 +26,12 @@
 
 ## Live Eval Results
 
+### Final Pre-Launch (10 traces, 30 evals, $0.19 — 2026-04-29)
+- Clinical accuracy: **90% pass** (9/10)
+- Handoff quality: **100% pass** (10/10)
+- Artifact handling: **100% pass** (10/10)
+- API calls: 40 | Tokens: 19,921 in / 8,974 out
+
 ### V2.1 (10 traces, 30 evals, $0.20 — after prompt + parser fixes)
 - Clinical accuracy: 60-70% pass (variance across runs)
 - Handoff quality: 80% pass (recovered from 20-30% pre-fix)
