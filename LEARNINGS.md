@@ -239,7 +239,7 @@ The default `CostTracker(max_calls=20)` was too low for a 10-trace run (10 hando
 
 ## 13. V1 Clinical Review Feedback
 
-Clinical domain review conducted using a neonatal SpO2 expert reviewer persona (modeled on Dr. Christopher Bonafide, CHOP/UPenn — pulse oximetry accuracy, alarm fatigue, home monitoring safety research).
+Clinical domain review conducted using a neonatal SpO2 expert reviewer persona (informed by published research on pulse oximetry accuracy, alarm fatigue, and home monitoring safety).
 
 **Verdict: NEEDS REVISION** — strong clinical thinking, two stop-ship issues.
 

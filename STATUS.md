@@ -48,7 +48,7 @@
 - Artifact handling: 100% pass
 
 ## Clinical Review Fixes (v2)
-Applied based on domain review (Bonafide/CHOP persona). See LEARNINGS.md #13.
+Applied based on domain review (neonatal SpO2 expert reviewer persona). See LEARNINGS.md #13.
 
 ### P1 — Safety Critical (done)
 - [x] Urgent false negative safety constraint — raw signal check overrides artifact masking
