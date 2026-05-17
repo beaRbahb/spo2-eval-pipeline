@@ -2,70 +2,70 @@
   "crosstab": [
     {
       "ground_truth": "artifact",
-      "Tier 1": 48,
-      "Tier 2": 4,
+      "Tier 1": 46,
+      "Tier 2": 2,
       "Expert": 0
     },
     {
       "ground_truth": "borderline",
-      "Tier 1": 41,
-      "Tier 2": 84,
-      "Expert": 5
+      "Tier 1": 90,
+      "Tier 2": 60,
+      "Expert": 24
     },
     {
       "ground_truth": "emergency",
-      "Tier 1": 42,
+      "Tier 1": 25,
       "Tier 2": 0,
       "Expert": 0
     },
     {
       "ground_truth": "normal",
-      "Tier 1": 38,
-      "Tier 2": 29,
-      "Expert": 5
+      "Tier 1": 79,
+      "Tier 2": 48,
+      "Expert": 25
     },
     {
       "ground_truth": "urgent",
-      "Tier 1": 4,
+      "Tier 1": 1,
       "Tier 2": 0,
       "Expert": 0
     }
   ],
   "per_label_metrics": {
     "normal": {
-      "sensitivity": 75.0,
-      "ppv": 87.1,
-      "f1": 80.6,
-      "support": 72
+      "sensitivity": 77.0,
+      "ppv": 89.3,
+      "f1": 82.7,
+      "support": 152
     },
     "borderline": {
-      "sensitivity": 93.8,
-      "ppv": 87.8,
-      "f1": 90.7,
-      "support": 130
+      "sensitivity": 90.2,
+      "ppv": 83.5,
+      "f1": 86.7,
+      "support": 174
     },
     "urgent": {
       "sensitivity": 100.0,
-      "ppv": 66.7,
-      "f1": 80.0,
-      "support": 4
+      "ppv": 20.0,
+      "f1": 33.3,
+      "support": 1
     },
     "emergency": {
       "sensitivity": 100.0,
       "ppv": 100.0,
       "f1": 100.0,
-      "support": 42
+      "support": 25
     },
     "artifact": {
-      "sensitivity": 96.2,
-      "ppv": 98.0,
-      "f1": 97.1,
-      "support": 52
+      "sensitivity": 91.7,
+      "ppv": 86.3,
+      "f1": 88.9,
+      "support": 48
     }
   },
   "tier_accuracy": {
-    "Tier 1": 97.7,
-    "Tier 2": 80.3,
-    "Expert": 90.0
+    "Tier 1": 94.2,
+    "Tier 2": 63.6,
+    "Expert": 95.9
   }
 }

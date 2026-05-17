@@ -1,38 +1,212 @@
 {
-  "emergency": {
-    "trace_id": "992459ab",
-    "adt_a01": "MSH|^~\\&|NICU_SPO2_MONITOR|DEMO_HOSPITAL|RHAPSODY_ENGINE|DEMO_HOSPITAL|20260427105827||ADT^A01^ADT_A01|C437E382C5|P|2.5.1\rEVN|A01|20260427105827\rPID|1||b5a2ae59^^^DEMO_HOSPITAL^MR||BABY^DEMO_b5a2||20260411|U\rPV1|1|I|NICU^BED01^^DEMO_HOSPITAL||||||||||||||||||||||||||||||||||||20260427105827\rOBX|1|NM|59408-5^Oxygen saturation Pulse oximetry^LN||90.1|%^percent^UCUM||||||F\rOBX|2|NM|X-GA-WEEKS^Gestational Age^L||25|wk^weeks^UCUM||||||F\rOBX|3|NM|X-BIRTH-WT^Birth Weight^L||864|g^grams^UCUM||||||F",
-    "ack_a01": "MSH|^~\\&|RHAPSODY_ENGINE|DEMO_HOSPITAL|NICU_SPO2_MONITOR|DEMO_HOSPITAL|20260427105827||ACK^A01^ACK|1D1AB53710|P|2.5.1\rMSA|AA|C437E382C5",
-    "oru_r01": "MSH|^~\\&|SPO2_EVAL_PIPELINE|DEMO_HOSPITAL|EHR_SYSTEM|DEMO_HOSPITAL|20260427105827||ORU^R01^ORU_R01|DFCD2EED04|P|2.5.1\rPID|1||b5a2ae59^^^DEMO_HOSPITAL^MR||BABY^DEMO_b5a2||20260411|U\rOBR|1|992459ab||59408-5^Overnight SpO2 Monitoring^LN|||20250101210000||||||||||||||||F\rOBX|1|NM|59408-5^Oxygen saturation Pulse oximetry Mean^LN||90.0|%^percent^UCUM|>94|AA|||F|||20250101210000\rOBX|2|NM|59408-5^Oxygen saturation Pulse oximetry Min^LN||76.6|%^percent^UCUM|>90|AA|||F|||20250101210000\rOBX|3|ST|X-TRIAGE-001^Triage Label^L||emergency||||||F|||20250101210000\rOBX|4|ST|X-URGENCY-001^Urgency Level^L||EMERGENCY||||||F|||20250101210000\rOBX|5|NM|X-SATSEC-001^SatSeconds Burden^L||1025|sec^seconds^UCUM|<100||||F|||20250101210000\rOBX|6|NM|X-DESAT-001^Desat Event Count^L||3|{events}^events^UCUM|0||||F|||20250101210000\rNTE|1|L|EMERGENCY — Baby had a severe desaturation event reaching 77% overnight, lasting 100s|RE\rNTE|2|L|SatSeconds burden: 1025.\nAs a 25-week preterm infant (now 16 days old), some SpO2 variability is expected at this gestational age, and baseline readings of 91-93% are within the normal range for extremely preterm infants|RE\rNTE|3|L|This level of desaturation poses immediate risk.\nAction: Advise family to call 911 or go to nearest emergency department immediately|RE\rNTE|4|L|If family cannot be reached within 15 minutes, escalate to on-call physician for emergency welfare check.\nAsk family: Is the baby breathing normally? Any visible changes in skin color or feeding difficulty?|RE",
+  "normal": {
+    "trace_id": "3f7f6085",
+    "adt_a01": "MSH|^~\\&|NICU_SPO2_MONITOR|DEMO_HOSPITAL|RHAPSODY_ENGINE|DEMO_HOSPITAL|20260517093029||ADT^A01^ADT_A01|B177B9F17F|P|2.5.1\rEVN|A01|20260517093029\rPID|1||1707cee5^^^DEMO_HOSPITAL^MR||BABY^DEMO_1707||20260407|U\rPV1|1|I|NICU^BED01^^DEMO_HOSPITAL||||||||||||||||||||||||||||||||||||20260517093029\rOBX|1|NM|59408-5^Oxygen saturation Pulse oximetry^LN||97.1|%^percent^UCUM||||||F\rOBX|2|NM|X-GA-WEEKS^Gestational Age^L||40|wk^weeks^UCUM||||||F\rOBX|3|NM|X-BIRTH-WT^Birth Weight^L||3590|g^grams^UCUM||||||F",
+    "ack_a01": "MSH|^~\\&|RHAPSODY_ENGINE|DEMO_HOSPITAL|NICU_SPO2_MONITOR|DEMO_HOSPITAL|20260517093029||ACK^A01^ACK|DE8F5372F0|P|2.5.1\rMSA|AA|B177B9F17F",
+    "oru_r01": "MSH|^~\\&|SPO2_EVAL_PIPELINE|DEMO_HOSPITAL|EHR_SYSTEM|DEMO_HOSPITAL|20260517093029||ORU^R01^ORU_R01|0325724A49|P|2.5.1\rPID|1||1707cee5^^^DEMO_HOSPITAL^MR||BABY^DEMO_1707||20260407|U\rOBR|1|3f7f6085||59408-5^Overnight SpO2 Monitoring^LN|||20250101210000||||||||||||||||F\rOBX|1|NM|59408-5^Oxygen saturation Pulse oximetry Mean^LN||97.1|%^percent^UCUM|>94|H|||F|||20250101210000\rOBX|2|NM|59408-5^Oxygen saturation Pulse oximetry Min^LN||95.8|%^percent^UCUM|>90|H|||F|||20250101210000\rOBX|3|ST|X-TRIAGE-001^Triage Label^L||normal||||||F|||20250101210000\rOBX|4|ST|X-URGENCY-001^Urgency Level^L||MONITOR||||||F|||20250101210000\rOBX|5|NM|X-SATSEC-001^SatSeconds Burden^L||0|sec^seconds^UCUM|<100||||F|||20250101210000\rOBX|6|NM|X-DESAT-001^Desat Event Count^L||0|{events}^events^UCUM|0||||F|||20250101210000\rNTE|1|L|MONITOR — Tonight's overnight SpO2 was within normal range (mean 97.1%, minimum 96%, SatSeconds burden 0)|RE\rNTE|2|L|The per-night reading is reassuring.\nHowever, this baby's multi-night hypoxemic burden has been trending upward across the recent monitoring window|RE\rNTE|3|L|As a 40-week term infant (now 40 days old), SpO2 readings should consistently be 97-100% at this gestational age.\nAction: Within 48 hours, review the multi-night trend view for context and schedule a clinical correlation call with the family|RE\rNTE|4|L|If the trend persists across another monitoring cycle, escalate to physician review.|RE",
     "round_trip_fields": [
       {
         "field": "baby_id",
-        "original": "b5a2ae59",
-        "parsed": "b5a2ae59",
+        "original": "1707cee5",
+        "parsed": "1707cee5",
         "match": true
       },
       {
         "field": "ga_weeks",
-        "original": "25",
-        "parsed": "25",
+        "original": "40",
+        "parsed": "40",
         "match": true
       },
       {
         "field": "birth_weight",
-        "original": "864",
-        "parsed": "864",
+        "original": "3590",
+        "parsed": "3590",
         "match": true
       },
       {
         "field": "spo2_baseline",
-        "original": "90.1",
-        "parsed": "90.1",
+        "original": "97.1",
+        "parsed": "97.1",
         "match": true
       },
       {
         "field": "ga_category",
-        "original": "extremely_preterm",
-        "parsed": "extremely_preterm",
+        "original": "term",
+        "parsed": "term",
+        "match": true
+      }
+    ],
+    "adt_segment_count": 7,
+    "oru_obx_count": 6,
+    "round_trip_match": true,
+    "urgency_level": "MONITOR",
+    "final_label": "normal",
+    "baby": {
+      "baby_id": "1707cee5",
+      "gestational_age_weeks": 40,
+      "ga_category": "term",
+      "birth_weight_grams": 3590,
+      "days_since_birth": 40,
+      "known_conditions": [
+        "none"
+      ],
+      "spo2_baseline": 97.1
+    },
+    "stats": {
+      "mean_spo2": 97.1,
+      "min_spo2": 96.0
+    }
+  },
+  "artifact": {
+    "trace_id": "1c83c8c5",
+    "adt_a01": "MSH|^~\\&|NICU_SPO2_MONITOR|DEMO_HOSPITAL|RHAPSODY_ENGINE|DEMO_HOSPITAL|20260517093029||ADT^A01^ADT_A01|B177B9F17F|P|2.5.1\rEVN|A01|20260517093029\rPID|1||1707cee5^^^DEMO_HOSPITAL^MR||BABY^DEMO_1707||20260407|U\rPV1|1|I|NICU^BED01^^DEMO_HOSPITAL||||||||||||||||||||||||||||||||||||20260517093029\rOBX|1|NM|59408-5^Oxygen saturation Pulse oximetry^LN||97.1|%^percent^UCUM||||||F\rOBX|2|NM|X-GA-WEEKS^Gestational Age^L||40|wk^weeks^UCUM||||||F\rOBX|3|NM|X-BIRTH-WT^Birth Weight^L||3590|g^grams^UCUM||||||F",
+    "ack_a01": "MSH|^~\\&|RHAPSODY_ENGINE|DEMO_HOSPITAL|NICU_SPO2_MONITOR|DEMO_HOSPITAL|20260517093029||ACK^A01^ACK|DE8F5372F0|P|2.5.1\rMSA|AA|B177B9F17F",
+    "oru_r01": "MSH|^~\\&|SPO2_EVAL_PIPELINE|DEMO_HOSPITAL|EHR_SYSTEM|DEMO_HOSPITAL|20260517093029||ORU^R01^ORU_R01|7B4D648316|P|2.5.1\rPID|1||1707cee5^^^DEMO_HOSPITAL^MR||BABY^DEMO_1707||20260407|U\rOBR|1|1c83c8c5||59408-5^Overnight SpO2 Monitoring^LN|||20250103210000||||||||||||||||F\rOBX|1|NM|59408-5^Oxygen saturation Pulse oximetry Mean^LN||97.1|%^percent^UCUM|>94|N|||F|||20250103210000\rOBX|2|NM|59408-5^Oxygen saturation Pulse oximetry Min^LN||74.7|%^percent^UCUM|>90|N|||F|||20250103210000\rOBX|3|ST|X-TRIAGE-001^Triage Label^L||artifact||||||F|||20250103210000\rOBX|4|ST|X-URGENCY-001^Urgency Level^L||ROUTINE||||||F|||20250103210000\rOBX|5|NM|X-SATSEC-001^SatSeconds Burden^L||64|sec^seconds^UCUM|<100||||F|||20250103210000\rOBX|6|NM|X-DESAT-001^Desat Event Count^L||0|{events}^events^UCUM|0||||F|||20250103210000\rNTE|1|L|ROUTINE (with note) — Overnight monitoring detected 1 motion artifact event(s) that were excluded from clinical analysis|RE\rNTE|2|L|After artifact removal, SpO2 was within normal range (mean 97.1%).\nAs a 40-week term infant (now 40 days old), SpO2 readings should consistently be 97-100% at this gestational age|RE\rNTE|3|L|The artifacts suggest the sensor may need repositioning.\nAction: Advise family on sensor placement during next scheduled check-in within 7 days|RE\rNTE|4|L|No urgent clinical follow-up needed.\nNote: trend tier signal not actionable on this night — the artifact-dominated reading does not reliably reflect the baby's hypoxemic burden|RE\rNTE|5|L|Re-evaluate after the next clean monitoring night.|RE",
+    "round_trip_fields": [
+      {
+        "field": "baby_id",
+        "original": "1707cee5",
+        "parsed": "1707cee5",
+        "match": true
+      },
+      {
+        "field": "ga_weeks",
+        "original": "40",
+        "parsed": "40",
+        "match": true
+      },
+      {
+        "field": "birth_weight",
+        "original": "3590",
+        "parsed": "3590",
+        "match": true
+      },
+      {
+        "field": "spo2_baseline",
+        "original": "97.1",
+        "parsed": "97.1",
+        "match": true
+      },
+      {
+        "field": "ga_category",
+        "original": "term",
+        "parsed": "term",
+        "match": true
+      }
+    ],
+    "adt_segment_count": 7,
+    "oru_obx_count": 6,
+    "round_trip_match": true,
+    "urgency_level": "ROUTINE",
+    "final_label": "artifact",
+    "baby": {
+      "baby_id": "1707cee5",
+      "gestational_age_weeks": 40,
+      "ga_category": "term",
+      "birth_weight_grams": 3590,
+      "days_since_birth": 40,
+      "known_conditions": [
+        "none"
+      ],
+      "spo2_baseline": 97.1
+    },
+    "stats": {
+      "mean_spo2": 97.1,
+      "min_spo2": 75.0
+    }
+  },
+  "borderline": {
+    "trace_id": "eed3a679",
+    "adt_a01": "MSH|^~\\&|NICU_SPO2_MONITOR|DEMO_HOSPITAL|RHAPSODY_ENGINE|DEMO_HOSPITAL|20260517093029||ADT^A01^ADT_A01|B177B9F17F|P|2.5.1\rEVN|A01|20260517093029\rPID|1||1707cee5^^^DEMO_HOSPITAL^MR||BABY^DEMO_1707||20260407|U\rPV1|1|I|NICU^BED01^^DEMO_HOSPITAL||||||||||||||||||||||||||||||||||||20260517093029\rOBX|1|NM|59408-5^Oxygen saturation Pulse oximetry^LN||97.1|%^percent^UCUM||||||F\rOBX|2|NM|X-GA-WEEKS^Gestational Age^L||40|wk^weeks^UCUM||||||F\rOBX|3|NM|X-BIRTH-WT^Birth Weight^L||3590|g^grams^UCUM||||||F",
+    "ack_a01": "MSH|^~\\&|RHAPSODY_ENGINE|DEMO_HOSPITAL|NICU_SPO2_MONITOR|DEMO_HOSPITAL|20260517093029||ACK^A01^ACK|DE8F5372F0|P|2.5.1\rMSA|AA|B177B9F17F",
+    "oru_r01": "MSH|^~\\&|SPO2_EVAL_PIPELINE|DEMO_HOSPITAL|EHR_SYSTEM|DEMO_HOSPITAL|20260517093029||ORU^R01^ORU_R01|E420B61DA3|P|2.5.1\rPID|1||1707cee5^^^DEMO_HOSPITAL^MR||BABY^DEMO_1707||20260407|U\rOBR|1|eed3a679||59408-5^Overnight SpO2 Monitoring^LN|||20250106210000||||||||||||||||F\rOBX|1|NM|59408-5^Oxygen saturation Pulse oximetry Mean^LN||97.1|%^percent^UCUM|>94|H|||F|||20250106210000\rOBX|2|NM|59408-5^Oxygen saturation Pulse oximetry Min^LN||90.2|%^percent^UCUM|>90|H|||F|||20250106210000\rOBX|3|ST|X-TRIAGE-001^Triage Label^L||borderline||||||F|||20250106210000\rOBX|4|ST|X-URGENCY-001^Urgency Level^L||MONITOR||||||F|||20250106210000\rOBX|5|NM|X-SATSEC-001^SatSeconds Burden^L||0|sec^seconds^UCUM|<100||||F|||20250106210000\rOBX|6|NM|X-DESAT-001^Desat Event Count^L||0|{events}^events^UCUM|0||||F|||20250106210000\rNTE|1|L|MONITOR — Baby had 9 borderline SpO2 event(s) in the 90-94% range overnight|RE\rNTE|2|L|Mean SpO2 was 97.1%, minimum 90%.\nAs a 40-week term infant (now 40 days old), SpO2 readings should consistently be 97-100% at this gestational age|RE\rNTE|3|L|These readings are not clearly urgent but need closer follow-up.\nAction: Schedule follow-up pulse oximetry within 48 hours|RE\rNTE|4|L|If this is the third consecutive borderline night, escalate to physician review.\n[TREND] Trend tier has flagged this baby — hypoxemic burden has been rising across recent nights, even when individual nights fall within expected ranges|RE\rNTE|5|L|Review the multi-night trend view alongside tonight's result for full clinical context.|RE",
+    "round_trip_fields": [
+      {
+        "field": "baby_id",
+        "original": "1707cee5",
+        "parsed": "1707cee5",
+        "match": true
+      },
+      {
+        "field": "ga_weeks",
+        "original": "40",
+        "parsed": "40",
+        "match": true
+      },
+      {
+        "field": "birth_weight",
+        "original": "3590",
+        "parsed": "3590",
+        "match": true
+      },
+      {
+        "field": "spo2_baseline",
+        "original": "97.1",
+        "parsed": "97.1",
+        "match": true
+      },
+      {
+        "field": "ga_category",
+        "original": "term",
+        "parsed": "term",
+        "match": true
+      }
+    ],
+    "adt_segment_count": 7,
+    "oru_obx_count": 6,
+    "round_trip_match": true,
+    "urgency_level": "MONITOR",
+    "final_label": "borderline",
+    "baby": {
+      "baby_id": "1707cee5",
+      "gestational_age_weeks": 40,
+      "ga_category": "term",
+      "birth_weight_grams": 3590,
+      "days_since_birth": 40,
+      "known_conditions": [
+        "none"
+      ],
+      "spo2_baseline": 97.1
+    },
+    "stats": {
+      "mean_spo2": 97.1,
+      "min_spo2": 90.0
+    }
+  },
+  "emergency": {
+    "trace_id": "ef65c9ac",
+    "adt_a01": "MSH|^~\\&|NICU_SPO2_MONITOR|DEMO_HOSPITAL|RHAPSODY_ENGINE|DEMO_HOSPITAL|20260517093029||ADT^A01^ADT_A01|B177B9F17F|P|2.5.1\rEVN|A01|20260517093029\rPID|1||1707cee5^^^DEMO_HOSPITAL^MR||BABY^DEMO_1707||20260407|U\rPV1|1|I|NICU^BED01^^DEMO_HOSPITAL||||||||||||||||||||||||||||||||||||20260517093029\rOBX|1|NM|59408-5^Oxygen saturation Pulse oximetry^LN||97.1|%^percent^UCUM||||||F\rOBX|2|NM|X-GA-WEEKS^Gestational Age^L||40|wk^weeks^UCUM||||||F\rOBX|3|NM|X-BIRTH-WT^Birth Weight^L||3590|g^grams^UCUM||||||F",
+    "ack_a01": "MSH|^~\\&|RHAPSODY_ENGINE|DEMO_HOSPITAL|NICU_SPO2_MONITOR|DEMO_HOSPITAL|20260517093029||ACK^A01^ACK|DE8F5372F0|P|2.5.1\rMSA|AA|B177B9F17F",
+    "oru_r01": "MSH|^~\\&|SPO2_EVAL_PIPELINE|DEMO_HOSPITAL|EHR_SYSTEM|DEMO_HOSPITAL|20260517093029||ORU^R01^ORU_R01|28E9507E25|P|2.5.1\rPID|1||1707cee5^^^DEMO_HOSPITAL^MR||BABY^DEMO_1707||20260407|U\rOBR|1|ef65c9ac||59408-5^Overnight SpO2 Monitoring^LN|||20250113210000||||||||||||||||F\rOBX|1|NM|59408-5^Oxygen saturation Pulse oximetry Mean^LN||96.9|%^percent^UCUM|>94|AA|||F|||20250113210000\rOBX|2|NM|59408-5^Oxygen saturation Pulse oximetry Min^LN||75.0|%^percent^UCUM|>90|AA|||F|||20250113210000\rOBX|3|ST|X-TRIAGE-001^Triage Label^L||emergency||||||F|||20250113210000\rOBX|4|ST|X-URGENCY-001^Urgency Level^L||EMERGENCY||||||F|||20250113210000\rOBX|5|NM|X-SATSEC-001^SatSeconds Burden^L||2635|sec^seconds^UCUM|<100||||F|||20250113210000\rOBX|6|NM|X-DESAT-001^Desat Event Count^L||7|{events}^events^UCUM|0||||F|||20250113210000\rNTE|1|L|EMERGENCY — Baby had a severe desaturation event reaching 75% overnight, lasting 70s|RE\rNTE|2|L|SatSeconds burden: 2635.\nAs a 40-week term infant (now 40 days old), SpO2 readings should consistently be 97-100% at this gestational age|RE\rNTE|3|L|This level of desaturation poses immediate risk.\nAction: Advise family to call 911 or go to nearest emergency department immediately|RE\rNTE|4|L|If family cannot be reached within 15 minutes, escalate to on-call physician for emergency welfare check.\nAsk family: Is the baby breathing normally? Any visible changes in skin color or feeding difficulty?\n[TREND] Trend tier has flagged this baby — hypoxemic burden has been rising across recent nights, even when individual nights fall within expected ranges|RE\rNTE|5|L|Review the multi-night trend view alongside tonight's result for full clinical context.|RE",
+    "round_trip_fields": [
+      {
+        "field": "baby_id",
+        "original": "1707cee5",
+        "parsed": "1707cee5",
+        "match": true
+      },
+      {
+        "field": "ga_weeks",
+        "original": "40",
+        "parsed": "40",
+        "match": true
+      },
+      {
+        "field": "birth_weight",
+        "original": "3590",
+        "parsed": "3590",
+        "match": true
+      },
+      {
+        "field": "spo2_baseline",
+        "original": "97.1",
+        "parsed": "97.1",
+        "match": true
+      },
+      {
+        "field": "ga_category",
+        "original": "term",
+        "parsed": "term",
         "match": true
       }
     ],
@@ -42,205 +216,31 @@
     "urgency_level": "EMERGENCY",
     "final_label": "emergency",
     "baby": {
-      "baby_id": "b5a2ae59",
-      "gestational_age_weeks": 25,
-      "ga_category": "extremely_preterm",
-      "birth_weight_grams": 864,
-      "days_since_birth": 16,
+      "baby_id": "1707cee5",
+      "gestational_age_weeks": 40,
+      "ga_category": "term",
+      "birth_weight_grams": 3590,
+      "days_since_birth": 40,
       "known_conditions": [
         "none"
       ],
-      "spo2_baseline": 90.1
+      "spo2_baseline": 97.1
     },
     "stats": {
-      "mean_spo2": 90.0,
-      "min_spo2": 77.0
-    }
-  },
-  "borderline": {
-    "trace_id": "2a58bfa9",
-    "adt_a01": "MSH|^~\\&|NICU_SPO2_MONITOR|DEMO_HOSPITAL|RHAPSODY_ENGINE|DEMO_HOSPITAL|20260427105827||ADT^A01^ADT_A01|C437E382C5|P|2.5.1\rEVN|A01|20260427105827\rPID|1||b5a2ae59^^^DEMO_HOSPITAL^MR||BABY^DEMO_b5a2||20260411|U\rPV1|1|I|NICU^BED01^^DEMO_HOSPITAL||||||||||||||||||||||||||||||||||||20260427105827\rOBX|1|NM|59408-5^Oxygen saturation Pulse oximetry^LN||90.1|%^percent^UCUM||||||F\rOBX|2|NM|X-GA-WEEKS^Gestational Age^L||25|wk^weeks^UCUM||||||F\rOBX|3|NM|X-BIRTH-WT^Birth Weight^L||864|g^grams^UCUM||||||F",
-    "ack_a01": "MSH|^~\\&|RHAPSODY_ENGINE|DEMO_HOSPITAL|NICU_SPO2_MONITOR|DEMO_HOSPITAL|20260427105827||ACK^A01^ACK|1D1AB53710|P|2.5.1\rMSA|AA|C437E382C5",
-    "oru_r01": "MSH|^~\\&|SPO2_EVAL_PIPELINE|DEMO_HOSPITAL|EHR_SYSTEM|DEMO_HOSPITAL|20260427105827||ORU^R01^ORU_R01|44AC07FC61|P|2.5.1\rPID|1||b5a2ae59^^^DEMO_HOSPITAL^MR||BABY^DEMO_b5a2||20260411|U\rOBR|1|2a58bfa9||59408-5^Overnight SpO2 Monitoring^LN|||20250102210000||||||||||||||||F\rOBX|1|NM|59408-5^Oxygen saturation Pulse oximetry Mean^LN||90.1|%^percent^UCUM|>94|H|||F|||20250102210000\rOBX|2|NM|59408-5^Oxygen saturation Pulse oximetry Min^LN||88.6|%^percent^UCUM|>90|H|||F|||20250102210000\rOBX|3|ST|X-TRIAGE-001^Triage Label^L||borderline||||||F|||20250102210000\rOBX|4|ST|X-URGENCY-001^Urgency Level^L||MONITOR||||||F|||20250102210000\rOBX|5|NM|X-SATSEC-001^SatSeconds Burden^L||0|sec^seconds^UCUM|<100||||F|||20250102210000\rOBX|6|NM|X-DESAT-001^Desat Event Count^L||0|{events}^events^UCUM|0||||F|||20250102210000\rNTE|1|L|MONITOR — Baby had 7 borderline SpO2 event(s) in the 90-94% range overnight|RE\rNTE|2|L|Mean SpO2 was 90.1%, minimum 89%.\nAs a 25-week preterm infant (now 16 days old), some SpO2 variability is expected at this gestational age, and baseline readings of 91-93% are within the normal range for extremely preterm infants|RE\rNTE|3|L|These readings are not clearly urgent but need closer follow-up.\nAction: Schedule follow-up pulse oximetry within 48 hours|RE\rNTE|4|L|If this is the third consecutive borderline night, escalate to physician review.|RE",
-    "round_trip_fields": [
-      {
-        "field": "baby_id",
-        "original": "b5a2ae59",
-        "parsed": "b5a2ae59",
-        "match": true
-      },
-      {
-        "field": "ga_weeks",
-        "original": "25",
-        "parsed": "25",
-        "match": true
-      },
-      {
-        "field": "birth_weight",
-        "original": "864",
-        "parsed": "864",
-        "match": true
-      },
-      {
-        "field": "spo2_baseline",
-        "original": "90.1",
-        "parsed": "90.1",
-        "match": true
-      },
-      {
-        "field": "ga_category",
-        "original": "extremely_preterm",
-        "parsed": "extremely_preterm",
-        "match": true
-      }
-    ],
-    "adt_segment_count": 7,
-    "oru_obx_count": 6,
-    "round_trip_match": true,
-    "urgency_level": "MONITOR",
-    "final_label": "borderline",
-    "baby": {
-      "baby_id": "b5a2ae59",
-      "gestational_age_weeks": 25,
-      "ga_category": "extremely_preterm",
-      "birth_weight_grams": 864,
-      "days_since_birth": 16,
-      "known_conditions": [
-        "none"
-      ],
-      "spo2_baseline": 90.1
-    },
-    "stats": {
-      "mean_spo2": 90.1,
-      "min_spo2": 89.0
-    }
-  },
-  "normal": {
-    "trace_id": "eed7efe9",
-    "adt_a01": "MSH|^~\\&|NICU_SPO2_MONITOR|DEMO_HOSPITAL|RHAPSODY_ENGINE|DEMO_HOSPITAL|20260427105827||ADT^A01^ADT_A01|27108BD615|P|2.5.1\rEVN|A01|20260427105827\rPID|1||e2737903^^^DEMO_HOSPITAL^MR||BABY^DEMO_e273||20260423|U\rPV1|1|I|NICU^BED01^^DEMO_HOSPITAL||||||||||||||||||||||||||||||||||||20260427105827\rOBX|1|NM|59408-5^Oxygen saturation Pulse oximetry^LN||93.4|%^percent^UCUM||||||F\rOBX|2|NM|X-GA-WEEKS^Gestational Age^L||29|wk^weeks^UCUM||||||F\rOBX|3|NM|X-BIRTH-WT^Birth Weight^L||1560|g^grams^UCUM||||||F",
-    "ack_a01": "MSH|^~\\&|RHAPSODY_ENGINE|DEMO_HOSPITAL|NICU_SPO2_MONITOR|DEMO_HOSPITAL|20260427105827||ACK^A01^ACK|50740FA714|P|2.5.1\rMSA|AA|27108BD615",
-    "oru_r01": "MSH|^~\\&|SPO2_EVAL_PIPELINE|DEMO_HOSPITAL|EHR_SYSTEM|DEMO_HOSPITAL|20260427105827||ORU^R01^ORU_R01|4F1FAC6509|P|2.5.1\rPID|1||e2737903^^^DEMO_HOSPITAL^MR||BABY^DEMO_e273||20260423|U\rOBR|1|eed7efe9||59408-5^Overnight SpO2 Monitoring^LN|||20250101210000||||||||||||||||F\rOBX|1|NM|59408-5^Oxygen saturation Pulse oximetry Mean^LN||93.4|%^percent^UCUM|>94|H|||F|||20250101210000\rOBX|2|NM|59408-5^Oxygen saturation Pulse oximetry Min^LN||92.0|%^percent^UCUM|>90|H|||F|||20250101210000\rOBX|3|ST|X-TRIAGE-001^Triage Label^L||borderline||||||F|||20250101210000\rOBX|4|ST|X-URGENCY-001^Urgency Level^L||MONITOR||||||F|||20250101210000\rOBX|5|NM|X-SATSEC-001^SatSeconds Burden^L||0|sec^seconds^UCUM|<100||||F|||20250101210000\rOBX|6|NM|X-DESAT-001^Desat Event Count^L||0|{events}^events^UCUM|0||||F|||20250101210000\rNTE|1|L|MONITOR — Baby had 0 borderline SpO2 event(s) in the 90-94% range overnight|RE\rNTE|2|L|Mean SpO2 was 93.4%, minimum 92%.\nAs a 29-week preterm infant (now 4 days old), baseline SpO2 readings of 93-95% are expected for very preterm infants, and mild variability is normal|RE\rNTE|3|L|These readings are not clearly urgent but need closer follow-up.\nAction: Schedule follow-up pulse oximetry within 48 hours|RE\rNTE|4|L|If this is the third consecutive borderline night, escalate to physician review.|RE",
-    "round_trip_fields": [
-      {
-        "field": "baby_id",
-        "original": "e2737903",
-        "parsed": "e2737903",
-        "match": true
-      },
-      {
-        "field": "ga_weeks",
-        "original": "29",
-        "parsed": "29",
-        "match": true
-      },
-      {
-        "field": "birth_weight",
-        "original": "1560",
-        "parsed": "1560",
-        "match": true
-      },
-      {
-        "field": "spo2_baseline",
-        "original": "93.4",
-        "parsed": "93.4",
-        "match": true
-      },
-      {
-        "field": "ga_category",
-        "original": "very_preterm",
-        "parsed": "very_preterm",
-        "match": true
-      }
-    ],
-    "adt_segment_count": 7,
-    "oru_obx_count": 6,
-    "round_trip_match": true,
-    "urgency_level": "MONITOR",
-    "final_label": "borderline",
-    "baby": {
-      "baby_id": "e2737903",
-      "gestational_age_weeks": 29,
-      "ga_category": "very_preterm",
-      "birth_weight_grams": 1560,
-      "days_since_birth": 4,
-      "known_conditions": [
-        "none"
-      ],
-      "spo2_baseline": 93.4
-    },
-    "stats": {
-      "mean_spo2": 93.4,
-      "min_spo2": 92.0
-    }
-  },
-  "artifact": {
-    "trace_id": "50e6bcef",
-    "adt_a01": "MSH|^~\\&|NICU_SPO2_MONITOR|DEMO_HOSPITAL|RHAPSODY_ENGINE|DEMO_HOSPITAL|20260427105827||ADT^A01^ADT_A01|2614813735|P|2.5.1\rEVN|A01|20260427105827\rPID|1||92daf114^^^DEMO_HOSPITAL^MR||BABY^DEMO_92da||20260311|U\rPV1|1|I|NICU^BED01^^DEMO_HOSPITAL||||||||||||||||||||||||||||||||||||20260427105827\rOBX|1|NM|59408-5^Oxygen saturation Pulse oximetry^LN||93.5|%^percent^UCUM||||||F\rOBX|2|NM|X-GA-WEEKS^Gestational Age^L||30|wk^weeks^UCUM||||||F\rOBX|3|NM|X-BIRTH-WT^Birth Weight^L||1086|g^grams^UCUM||||||F\rDG1|1||P28.4^Primary apnea of newborn^I10||20260427105827|A",
-    "ack_a01": "MSH|^~\\&|RHAPSODY_ENGINE|DEMO_HOSPITAL|NICU_SPO2_MONITOR|DEMO_HOSPITAL|20260427105827||ACK^A01^ACK|70DD7B1FA7|P|2.5.1\rMSA|AA|2614813735",
-    "oru_r01": "MSH|^~\\&|SPO2_EVAL_PIPELINE|DEMO_HOSPITAL|EHR_SYSTEM|DEMO_HOSPITAL|20260427105827||ORU^R01^ORU_R01|536FA0E0E3|P|2.5.1\rPID|1||92daf114^^^DEMO_HOSPITAL^MR||BABY^DEMO_92da||20260311|U\rOBR|1|50e6bcef||59408-5^Overnight SpO2 Monitoring^LN|||20250101210000||||||||||||||||F\rOBX|1|NM|59408-5^Oxygen saturation Pulse oximetry Mean^LN||93.5|%^percent^UCUM|>94|N|||F|||20250101210000\rOBX|2|NM|59408-5^Oxygen saturation Pulse oximetry Min^LN||51.8|%^percent^UCUM|>90|N|||F|||20250101210000\rOBX|3|ST|X-TRIAGE-001^Triage Label^L||artifact||||||F|||20250101210000\rOBX|4|ST|X-URGENCY-001^Urgency Level^L||ROUTINE||||||F|||20250101210000\rOBX|5|NM|X-SATSEC-001^SatSeconds Burden^L||199|sec^seconds^UCUM|<100||||F|||20250101210000\rOBX|6|NM|X-DESAT-001^Desat Event Count^L||0|{events}^events^UCUM|0||||F|||20250101210000\rNTE|1|L|ROUTINE (with note) — Overnight monitoring detected 2 motion artifact event(s) that were excluded from clinical analysis|RE\rNTE|2|L|After artifact removal, SpO2 was within normal range (mean 93.5%).\nAs a 30-week preterm infant (now 47 days old), baseline SpO2 readings of 93-95% are expected for very preterm infants, and mild variability is normal|RE\rNTE|3|L|The artifacts suggest the sensor may need repositioning.\nAction: Advise family on sensor placement during next scheduled check-in within 7 days. No urgent clinical follow-up needed.|RE",
-    "round_trip_fields": [
-      {
-        "field": "baby_id",
-        "original": "92daf114",
-        "parsed": "92daf114",
-        "match": true
-      },
-      {
-        "field": "ga_weeks",
-        "original": "30",
-        "parsed": "30",
-        "match": true
-      },
-      {
-        "field": "birth_weight",
-        "original": "1086",
-        "parsed": "1086",
-        "match": true
-      },
-      {
-        "field": "spo2_baseline",
-        "original": "93.5",
-        "parsed": "93.5",
-        "match": true
-      },
-      {
-        "field": "ga_category",
-        "original": "very_preterm",
-        "parsed": "very_preterm",
-        "match": true
-      }
-    ],
-    "adt_segment_count": 8,
-    "oru_obx_count": 6,
-    "round_trip_match": true,
-    "urgency_level": "ROUTINE",
-    "final_label": "artifact",
-    "baby": {
-      "baby_id": "92daf114",
-      "gestational_age_weeks": 30,
-      "ga_category": "very_preterm",
-      "birth_weight_grams": 1086,
-      "days_since_birth": 47,
-      "known_conditions": [
-        "apnea_of_prematurity"
-      ],
-      "spo2_baseline": 93.5
-    },
-    "stats": {
-      "mean_spo2": 93.5,
-      "min_spo2": 52.0
+      "mean_spo2": 96.9,
+      "min_spo2": 75.0
     }
   },
   "urgent": {
-    "trace_id": "11055990",
-    "adt_a01": "MSH|^~\\&|NICU_SPO2_MONITOR|DEMO_HOSPITAL|RHAPSODY_ENGINE|DEMO_HOSPITAL|20260427105827||ADT^A01^ADT_A01|9E47F0D62E|P|2.5.1\rEVN|A01|20260427105827\rPID|1||850af4cc^^^DEMO_HOSPITAL^MR||BABY^DEMO_850a||20260131|U\rPV1|1|I|NICU^BED01^^DEMO_HOSPITAL||||||||||||||||||||||||||||||||||||20260427105827\rOBX|1|NM|59408-5^Oxygen saturation Pulse oximetry^LN||95.4|%^percent^UCUM||||||F\rOBX|2|NM|X-GA-WEEKS^Gestational Age^L||32|wk^weeks^UCUM||||||F\rOBX|3|NM|X-BIRTH-WT^Birth Weight^L||2296|g^grams^UCUM||||||F",
-    "ack_a01": "MSH|^~\\&|RHAPSODY_ENGINE|DEMO_HOSPITAL|NICU_SPO2_MONITOR|DEMO_HOSPITAL|20260427105827||ACK^A01^ACK|B35FC14FD1|P|2.5.1\rMSA|AA|9E47F0D62E",
-    "oru_r01": "MSH|^~\\&|SPO2_EVAL_PIPELINE|DEMO_HOSPITAL|EHR_SYSTEM|DEMO_HOSPITAL|20260427105827||ORU^R01^ORU_R01|C998BE2B09|P|2.5.1\rPID|1||850af4cc^^^DEMO_HOSPITAL^MR||BABY^DEMO_850a||20260131|U\rOBR|1|11055990||59408-5^Overnight SpO2 Monitoring^LN|||20250102210000||||||||||||||||F\rOBX|1|NM|59408-5^Oxygen saturation Pulse oximetry Mean^LN||95.4|%^percent^UCUM|>94|A|||F|||20250102210000\rOBX|2|NM|59408-5^Oxygen saturation Pulse oximetry Min^LN||82.3|%^percent^UCUM|>90|A|||F|||20250102210000\rOBX|3|ST|X-TRIAGE-001^Triage Label^L||urgent||||||F|||20250102210000\rOBX|4|ST|X-URGENCY-001^Urgency Level^L||URGENT||||||F|||20250102210000\rOBX|5|NM|X-SATSEC-001^SatSeconds Burden^L||495|sec^seconds^UCUM|<100||||F|||20250102210000\rOBX|6|NM|X-DESAT-001^Desat Event Count^L||3|{events}^events^UCUM|0||||F|||20250102210000\rNTE|1|L|URGENT — Baby had 3 desaturation event(s) below threshold overnight, with the longest lasting 58s and reaching 82%|RE\rNTE|2|L|SatSeconds burden: 495.\nAs a 32-week preterm infant (now 86 days old), SpO2 should be stabilizing toward term ranges, though occasional mild dips are still expected|RE\rNTE|3|L|This baby's overnight pattern requires prompt attention.\nAction: Call the family within 1 hour to confirm home oxygen equipment is functioning and check for visible breathing pauses|RE\rNTE|4|L|Flag for pediatrician follow-up today.\nAsk family: Have you noticed any breathing pauses, skin color changes, or feeding difficulty overnight?|RE",
+    "trace_id": "7d89797a",
+    "adt_a01": "MSH|^~\\&|NICU_SPO2_MONITOR|DEMO_HOSPITAL|RHAPSODY_ENGINE|DEMO_HOSPITAL|20260517093029||ADT^A01^ADT_A01|9D417C367C|P|2.5.1\rEVN|A01|20260517093029\rPID|1||502faa48^^^DEMO_HOSPITAL^MR||BABY^DEMO_502f||20260326|U\rPV1|1|I|NICU^BED01^^DEMO_HOSPITAL||||||||||||||||||||||||||||||||||||20260517093029\rOBX|1|NM|59408-5^Oxygen saturation Pulse oximetry^LN||95.7|%^percent^UCUM||||||F\rOBX|2|NM|X-GA-WEEKS^Gestational Age^L||32|wk^weeks^UCUM||||||F\rOBX|3|NM|X-BIRTH-WT^Birth Weight^L||2335|g^grams^UCUM||||||F",
+    "ack_a01": "MSH|^~\\&|RHAPSODY_ENGINE|DEMO_HOSPITAL|NICU_SPO2_MONITOR|DEMO_HOSPITAL|20260517093029||ACK^A01^ACK|DB78F49EF0|P|2.5.1\rMSA|AA|9D417C367C",
+    "oru_r01": "MSH|^~\\&|SPO2_EVAL_PIPELINE|DEMO_HOSPITAL|EHR_SYSTEM|DEMO_HOSPITAL|20260517093029||ORU^R01^ORU_R01|E03BCCADEA|P|2.5.1\rPID|1||502faa48^^^DEMO_HOSPITAL^MR||BABY^DEMO_502f||20260326|U\rOBR|1|7d89797a||59408-5^Overnight SpO2 Monitoring^LN|||20250112210000||||||||||||||||F\rOBX|1|NM|59408-5^Oxygen saturation Pulse oximetry Mean^LN||95.7|%^percent^UCUM|>94|A|||F|||20250112210000\rOBX|2|NM|59408-5^Oxygen saturation Pulse oximetry Min^LN||86.1|%^percent^UCUM|>90|A|||F|||20250112210000\rOBX|3|ST|X-TRIAGE-001^Triage Label^L||urgent||||||F|||20250112210000\rOBX|4|ST|X-URGENCY-001^Urgency Level^L||URGENT||||||F|||20250112210000\rOBX|5|NM|X-SATSEC-001^SatSeconds Burden^L||151|sec^seconds^UCUM|<100||||F|||20250112210000\rOBX|6|NM|X-DESAT-001^Desat Event Count^L||1|{events}^events^UCUM|0||||F|||20250112210000\rNTE|1|L|URGENT — Baby had 2 desaturation event(s) below threshold overnight, with the longest lasting 80s and reaching 86%|RE\rNTE|2|L|SatSeconds burden: 151.\nAs a 32-week preterm infant (now 52 days old), SpO2 should be stabilizing toward term ranges, though occasional mild dips are still expected|RE\rNTE|3|L|This baby's overnight pattern requires prompt attention.\nAction: Call the family within 1 hour to confirm home oxygen equipment is functioning and check for visible breathing pauses|RE\rNTE|4|L|Flag for pediatrician follow-up today.\nAsk family: Have you noticed any breathing pauses, skin color changes, or feeding difficulty overnight?|RE",
     "round_trip_fields": [
       {
         "field": "baby_id",
-        "original": "850af4cc",
-        "parsed": "850af4cc",
+        "original": "502faa48",
+        "parsed": "502faa48",
         "match": true
       },
       {
@@ -251,14 +251,14 @@
       },
       {
         "field": "birth_weight",
-        "original": "2296",
-        "parsed": "2296",
+        "original": "2335",
+        "parsed": "2335",
         "match": true
       },
       {
         "field": "spo2_baseline",
-        "original": "95.4",
-        "parsed": "95.4",
+        "original": "95.7",
+        "parsed": "95.7",
         "match": true
       },
       {
@@ -274,19 +274,19 @@
     "urgency_level": "URGENT",
     "final_label": "urgent",
     "baby": {
-      "baby_id": "850af4cc",
+      "baby_id": "502faa48",
       "gestational_age_weeks": 32,
       "ga_category": "moderate_preterm",
-      "birth_weight_grams": 2296,
-      "days_since_birth": 86,
+      "birth_weight_grams": 2335,
+      "days_since_birth": 52,
       "known_conditions": [
         "none"
       ],
-      "spo2_baseline": 95.4
+      "spo2_baseline": 95.7
     },
     "stats": {
-      "mean_spo2": 95.4,
-      "min_spo2": 82.0
+      "mean_spo2": 95.7,
+      "min_spo2": 86.0
     }
   },
   "_segment_mapping": [
