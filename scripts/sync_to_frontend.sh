@@ -28,6 +28,7 @@ JSON_FILES=(
   "hl7-messages.json"
   "rules-discovered.json"
   "traces-meta.json"
+  "trend-features.json"
 )
 
 WAVEFORMS_SUBDIR="waveforms"

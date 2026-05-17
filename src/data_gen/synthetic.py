@@ -25,6 +25,9 @@ from src.config import (
     DEFAULT_NIGHTS_PER_BABY,
     DEFAULT_SEED,
     OUTPUT_DIR,
+    CONDITIONS,
+    CONDITION_TARGET_COUNTS_N25,
+    N_SEEDED_DETERIORATING,
 )
 
 
@@ -43,6 +46,14 @@ class BabyProfile:
     known_conditions: list[str]
     spo2_baseline: float
     spo2_variability: float
+    # Cohort metadata: one of "AOP", "BPD", "CHD_interstage". Used for trend-tier
+    # reporting and handoff context; does NOT modulate signal generation.
+    condition: str = "AOP"
+    # Ground-truth label for trend-tier evaluation. When True, _assign_pattern
+    # routes through a night-index trajectory (normal → borderline → urgent)
+    # producing a positive SatSeconds slope across the cohort's nights. Set
+    # deterministically by cohort index in generate_baby_cohort — no RNG draw.
+    seeded_deteriorating: bool = False
 
 
 @dataclass
@@ -71,6 +82,46 @@ def _classify_ga(ga_weeks: int) -> str:
     return "term"
 
 
+def _assign_conditions(n: int, rng: np.random.Generator) -> list[str]:
+    """Return a length-n list of condition labels, shuffled.
+
+    Scales the canonical n=25 target distribution (10 AOP / 8 BPD / 7 CHD) to
+    the requested cohort size while guaranteeing at least one of each class.
+    Halts with a clear error if the cohort is too small to honor the
+    minimum-1-per-class invariant (n < 3).
+    """
+    if n < len(CONDITIONS):
+        raise ValueError(
+            f"Cannot assign all {len(CONDITIONS)} conditions across n={n} babies "
+            f"while honoring minimum-1-per-class. Use n >= {len(CONDITIONS)}."
+        )
+
+    # Scale n=25 targets proportionally; remainder goes to the largest class (AOP).
+    aop = max(1, round(n * CONDITION_TARGET_COUNTS_N25["AOP"] / 25))
+    bpd = max(1, round(n * CONDITION_TARGET_COUNTS_N25["BPD"] / 25))
+    chd = max(1, n - aop - bpd)
+    # If rounding pushed bpd+aop too high (chd would be < 1), trim aop first.
+    while chd < 1 and aop > 1:
+        aop -= 1
+        chd = n - aop - bpd
+    while chd < 1 and bpd > 1:
+        bpd -= 1
+        chd = n - aop - bpd
+
+    counts = {"AOP": aop, "BPD": bpd, "CHD_interstage": chd}
+    assert sum(counts.values()) == n, f"Condition counts {counts} don't sum to {n}"
+    for cond, cnt in counts.items():
+        if cnt < 1:
+            raise AssertionError(
+                f"Condition '{cond}' has 0 babies in cohort of n={n}; "
+                f"counts={counts}. Minimum-1-per-class invariant violated."
+            )
+
+    labels = [c for cond, cnt in counts.items() for c in [cond] * cnt]
+    rng.shuffle(labels)
+    return labels
+
+
 def generate_baby_cohort(n: int, rng: np.random.Generator) -> list[BabyProfile]:
     """Generate a cohort of baby profiles with realistic distributions."""
     babies = []
@@ -78,7 +129,9 @@ def generate_baby_cohort(n: int, rng: np.random.Generator) -> list[BabyProfile]:
     cat_weights = [0.20, 0.25, 0.25, 0.30]
     cat_names = list(GA_CATEGORIES.keys())
 
-    for _ in range(n):
+    condition_labels = _assign_conditions(n, rng)
+
+    for i in range(n):
         cat = rng.choice(cat_names, p=cat_weights)
         lo, hi = GA_CATEGORIES[cat]
         ga = rng.integers(lo, hi)
@@ -121,6 +174,8 @@ def generate_baby_cohort(n: int, rng: np.random.Generator) -> list[BabyProfile]:
             known_conditions=conditions,
             spo2_baseline=round(spo2_base, 1),
             spo2_variability=round(spo2_var, 2),
+            condition=condition_labels[i],
+            seeded_deteriorating=(i < min(N_SEEDED_DETERIORATING, n)),
         ))
     return babies
 
@@ -389,21 +444,50 @@ _GENERATORS = {
 # Pattern assignment logic
 # ---------------------------------------------------------------------------
 
-def _assign_pattern(baby: BabyProfile, rng: np.random.Generator) -> str:
-    """Assign pattern type weighted by GA category.
+def _assign_pattern(
+    baby: BabyProfile,
+    night: int,
+    n_nights: int,
+    rng: np.random.Generator,
+) -> str:
+    """Assign pattern type for a single (baby, night) draw.
 
-    Preterm babies get more borderline/urgent. Term babies mostly normal.
+    Two regimes:
+
+    - **Seeded-deteriorating babies** (ground-truth positive for trend tier):
+      pattern is a night-index function. Early third of nights → normal-weighted,
+      middle third → borderline-weighted, late third → urgent-leaning. Produces
+      a positive SatSeconds slope across the cohort's nights.
+
+    - **Stable babies** (ground-truth negative): narrowed per-night distribution
+      weighted by GA category — urgent fully suppressed so SatSeconds stays flat
+      with night-to-night noise but no monotonic drift.
+
+    `night` is 1-indexed. `n_nights` is the total nights per baby in the cohort
+    (typically `DEFAULT_NIGHTS_PER_BABY`).
     """
-    cat = baby.ga_category
-    # Weights: [normal, urgent, borderline, artifact]
-    if cat in ("extremely_preterm", "very_preterm"):
-        weights = [0.15, 0.20, 0.50, 0.15]
-    elif cat == "moderate_preterm":
-        weights = [0.30, 0.10, 0.40, 0.20]
-    else:  # term
-        weights = [0.55, 0.05, 0.20, 0.20]
-
     patterns = ["normal", "urgent", "borderline", "artifact"]
+
+    if baby.seeded_deteriorating:
+        # Split nights into thirds; ceil so a small `n_nights` still lands all
+        # three regimes (e.g. n_nights=4 → thirds at nights {1}, {2-3}, {4}).
+        third = max(1, n_nights // 3)
+        if night <= third:
+            weights = [0.70, 0.0, 0.20, 0.10]      # mostly normal
+        elif night <= 2 * third:
+            weights = [0.20, 0.05, 0.65, 0.10]     # borderline-dominant
+        else:
+            weights = [0.05, 0.50, 0.35, 0.10]     # urgent-leaning
+        return rng.choice(patterns, p=weights)
+
+    # Stable cohort: GA-weighted but urgent fully suppressed.
+    cat = baby.ga_category
+    if cat in ("extremely_preterm", "very_preterm"):
+        weights = [0.30, 0.0, 0.55, 0.15]
+    elif cat == "moderate_preterm":
+        weights = [0.45, 0.0, 0.40, 0.15]
+    else:  # term
+        weights = [0.65, 0.0, 0.20, 0.15]
     return rng.choice(patterns, p=weights)
 
 
@@ -461,7 +545,7 @@ def generate_dataset(
 
     for baby in babies:
         for night in range(1, nights_per_baby + 1):
-            pattern = _assign_pattern(baby, rng)
+            pattern = _assign_pattern(baby, night, nights_per_baby, rng)
             trace = generate_trace(baby, pattern, night, rng)
             traces.append(trace)
 

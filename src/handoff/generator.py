@@ -105,6 +105,41 @@ _GA_CONTEXT = {
 }
 
 
+# Stable-but-trending template — used when per-night triage is routine (normal)
+# but the baby's multi-night trend tier has fired. Urgency = MONITOR (handled by
+# existing parser; no new urgency level needed).
+_STABLE_BUT_TRENDING_TEMPLATE = (
+    "MONITOR — Tonight's overnight SpO2 was within normal range "
+    "(mean {mean_spo2:.1f}%, minimum {min_spo2:.0f}%, SatSeconds burden "
+    "{sat_seconds:.0f}). The per-night reading is reassuring.\n\n"
+    "However, this baby's multi-night hypoxemic burden has been trending "
+    "upward across the recent monitoring window. As a {ga_weeks}-week "
+    "{ga_desc} infant (now {days} days old), {ga_context}\n\n"
+    "Action: Within 48 hours, review the multi-night trend view for context "
+    "and schedule a clinical correlation call with the family. If the trend "
+    "persists across another monitoring cycle, escalate to physician review."
+)
+
+
+# Appended to emergency/urgent/borderline templates when baby_trend_flag=True.
+_TREND_BLOCK = (
+    "\n\n[TREND] Trend tier has flagged this baby — hypoxemic burden has been "
+    "rising across recent nights, even when individual nights fall within "
+    "expected ranges. Review the multi-night trend view alongside tonight's "
+    "result for full clinical context."
+)
+
+
+# Appended to the artifact template when baby_trend_flag=True. Artifact-dominated
+# nights cannot reliably contribute to the trend signal, so we explicitly tell
+# the nurse not to act on the trend flag for this night.
+_ARTIFACT_TRENDING_NOTE = (
+    "\n\nNote: trend tier signal not actionable on this night — the artifact-"
+    "dominated reading does not reliably reflect the baby's hypoxemic burden. "
+    "Re-evaluate after the next clean monitoring night."
+)
+
+
 def _compute_trace_stats(trace: NightTrace, rule_events: list[dict] | None = None) -> dict:
     """Extract summary stats needed for handoff templates.
 
@@ -154,12 +189,34 @@ def generate_handoff_mock(
     trace: NightTrace,
     final_label: str,
     rule_events: list[dict] | None = None,
+    baby_trend_flag: bool = False,
 ) -> HandoffSummary:
-    """Generate a handoff using templates (no API call)."""
+    """Generate a handoff using templates (no API call).
+
+    Trend-tier integration (when `baby_trend_flag=True`):
+    - emergency / urgent / borderline: existing template + [TREND] block
+    - normal:                          stable_but_trending template, urgency=MONITOR
+    - artifact:                        existing artifact template + non-actionable note
+                                       (the artifact-dominated night cannot reliably
+                                        contribute to the trend signal)
+    """
     stats = _compute_trace_stats(trace, rule_events=rule_events)
-    template = _MOCK_TEMPLATES.get(final_label, _MOCK_TEMPLATES["normal"])
-    summary_text = template.format(**stats)
-    urgency = _URGENCY_MAP.get(final_label, "ROUTINE")
+
+    if baby_trend_flag and final_label == "normal":
+        # Stable per-night, trending baby: route to MONITOR with trend rationale.
+        summary_text = _STABLE_BUT_TRENDING_TEMPLATE.format(**stats)
+        urgency = "MONITOR"
+    else:
+        template = _MOCK_TEMPLATES.get(final_label, _MOCK_TEMPLATES["normal"])
+        summary_text = template.format(**stats)
+        urgency = _URGENCY_MAP.get(final_label, "ROUTINE")
+
+        if baby_trend_flag:
+            if final_label == "artifact":
+                summary_text += _ARTIFACT_TRENDING_NOTE
+            elif final_label in ("emergency", "urgent", "borderline"):
+                summary_text += _TREND_BLOCK
+            # final_label == "normal" handled above; nothing else routes here.
 
     return HandoffSummary(
         trace_id=trace.night_id,
@@ -195,7 +252,7 @@ OVERNIGHT MONITORING RESULTS:
 - Artifact events excluded: {n_artifacts}
 - SatSeconds burden (hypoxemic severity): {sat_seconds:.0f}
 - Desaturation threshold (GA-adjusted): {ga_threshold}%
-
+{trend_context}
 REQUIREMENTS:
 1. Start with urgency level in caps: EMERGENCY / URGENT / MONITOR / ROUTINE
 2. First sentence: the single most important clinical finding
@@ -207,8 +264,37 @@ REQUIREMENTS:
 8. For EMERGENCY cases, direct family to call 911 or go to nearest ED
 9. For URGENT or EMERGENCY, include a clinical correlation question for the family
 10. Every action step MUST include a specific timeframe (e.g., "within 1 hour", "within 48 hours", "in 7 days"). Never say "at your next scheduled check-in" without a concrete timeframe.
+11. {trend_requirement}
 
 Generate the handoff summary now."""
+
+
+# Inserted into the OVERNIGHT MONITORING RESULTS block of _HANDOFF_PROMPT when
+# `baby_trend_flag=True`. Carries the multi-night signal that no single-night
+# snapshot can convey.
+_TREND_CONTEXT_BLOCK_FLAGGED = """
+TREND TIER (multi-night signal):
+- This baby has been flagged by the trend tier: hypoxemic burden (SatSeconds)
+  has been rising across the recent monitoring window, even where individual
+  nights fall within expected per-night ranges.
+"""
+
+_TREND_CONTEXT_BLOCK_NONE = ""
+
+# Used as requirement #11 in the prompt — instructs the model how to reason
+# about the trend signal vs the per-night signal.
+_TREND_REQUIREMENT_FLAGGED = (
+    "Because the trend tier has flagged this baby, append a final paragraph "
+    "starting with [TREND] that explains the multi-night pattern and the "
+    "rationale for elevated vigilance even if tonight's per-night triage is "
+    "routine. EXCEPTION: when tonight's classification is artifact, do NOT "
+    "append the [TREND] paragraph; instead, briefly note that the trend signal "
+    "is not actionable on an artifact-dominated night."
+)
+_TREND_REQUIREMENT_NONE = (
+    "If you have no multi-night trend signal, do not invent one — keep the "
+    "handoff focused on tonight's reading."
+)
 
 
 def generate_handoff_live(
@@ -217,8 +303,14 @@ def generate_handoff_live(
     classified_by: str = "pipeline",
     model: str | None = None,
     rule_events: list[dict] | None = None,
+    baby_trend_flag: bool = False,
 ) -> HandoffSummary | None:
-    """Generate a handoff using Claude API. Returns None if budget exceeded."""
+    """Generate a handoff using Claude API. Returns None if budget exceeded.
+
+    When `baby_trend_flag=True`, the prompt gains a TREND TIER context block
+    and a requirement to append a [TREND] paragraph to the output (except on
+    artifact-dominated nights, where the trend signal is not actionable).
+    """
     from src.llm_utils import call_llm
 
     stats = _compute_trace_stats(trace, rule_events=rule_events)
@@ -240,6 +332,10 @@ def generate_handoff_live(
         n_artifacts=stats["n_artifacts"],
         sat_seconds=stats["sat_seconds"],
         ga_threshold=stats["ga_threshold"],
+        trend_context=(_TREND_CONTEXT_BLOCK_FLAGGED if baby_trend_flag
+                       else _TREND_CONTEXT_BLOCK_NONE),
+        trend_requirement=(_TREND_REQUIREMENT_FLAGGED if baby_trend_flag
+                           else _TREND_REQUIREMENT_NONE),
     )
 
     result = call_llm(prompt, model=model, max_tokens=400)
@@ -280,16 +376,30 @@ def generate_handoff(
     use_llm: bool = False,
     model: str | None = None,
     rule_events: list[dict] | None = None,
+    baby_trend_flag: bool = False,
 ) -> HandoffSummary:
-    """Generate a handoff summary. Mock by default, live with use_llm=True."""
+    """Generate a handoff summary. Mock by default, live with use_llm=True.
+
+    `baby_trend_flag` carries the trend-tier signal from the orchestrator
+    (see FinalTriage.baby_trend_flag). When True, the handoff gains a
+    [TREND] block (mock) or a trend-aware paragraph (live), and routine
+    per-night triage routes through the stable-but-trending template.
+    Exception: artifact-dominated nights collapse to the artifact template
+    with a non-actionable note rather than carrying [TREND].
+    """
     if use_llm:
         result = generate_handoff_live(
             trace, final_label, classified_by, model,
             rule_events=rule_events,
+            baby_trend_flag=baby_trend_flag,
         )
         if result is not None:
             return result
         # Fall back to mock if API call failed or budget exceeded
         print(f"[HANDOFF] Falling back to mock for trace {trace.night_id}")
 
-    return generate_handoff_mock(trace, final_label, rule_events=rule_events)
+    return generate_handoff_mock(
+        trace, final_label,
+        rule_events=rule_events,
+        baby_trend_flag=baby_trend_flag,
+    )

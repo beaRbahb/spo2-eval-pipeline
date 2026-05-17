@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from collections import Counter
 
+from src.config import DEFAULT_N_BABIES, DEFAULT_NIGHTS_PER_BABY
 from src.data_gen.synthetic import (
     NightTrace,
     generate_dataset,
@@ -18,6 +19,7 @@ from src.data_gen.synthetic import (
 from src.rules.tier1_engine import RuleResult, run_tier1
 from src.patterns.feature_eng import build_feature_matrix
 from src.patterns.miner import CandidateRule, run_pattern_mining
+from src.patterns.trend_features import BabyTrendRecord, run_trend_tier
 from src.classifier.tier2 import Tier2Result, train_tier2, predict_tier2
 from src.classifier.expert_sim import ExpertResult, run_expert_queue
 
@@ -43,6 +45,12 @@ class FinalTriage:
     final_label: str
     source: str  # "tier1_rules", "tier2_classifier", "expert_review"
     confidence: float
+    # True when the baby's trend-tier record (across all nights) is flagged.
+    # Per-night labels are NOT altered by the trend tier — this is a parallel
+    # signal the handoff generator uses to decide whether to inject a [TREND]
+    # block (PY-6) and whether to route routine-per-night nights to the
+    # stable-but-trending template (urgency=MONITOR + [TREND] block).
+    baby_trend_flag: bool = False
 
 
 @dataclass
@@ -55,6 +63,7 @@ class PipelineResults:
     coverage: CoverageReport
     candidate_rules: list[CandidateRule]
     final_triage: list[FinalTriage]
+    trend_records: dict[str, BabyTrendRecord] = field(default_factory=dict)
     tree: object = None  # fitted DecisionTreeClassifier for visualization
 
 
@@ -62,8 +71,15 @@ def merge_triage(
     tier1_results: list[RuleResult],
     tier2_results: list[Tier2Result],
     expert_results: list[ExpertResult],
+    baby_trend_flags: dict[str, bool] | None = None,
 ) -> list[FinalTriage]:
-    """Merge results from all tiers into a single final triage list."""
+    """Merge results from all tiers into a single final triage list.
+
+    `baby_trend_flags` maps baby_id -> flagged. When provided, each FinalTriage
+    gets `baby_trend_flag=True` if its baby is in the flagged set. The trend
+    tier never overrides per-night labels — it's a parallel baby-level signal.
+    """
+    flags = baby_trend_flags or {}
     final = []
 
     # Tier 1 labeled traces
@@ -76,6 +92,7 @@ def merge_triage(
                 final_label=r.label,
                 source="tier1_rules",
                 confidence=r.confidence,
+                baby_trend_flag=flags.get(r.baby_id, False),
             ))
 
     # Tier 2 auto-labeled traces
@@ -88,6 +105,7 @@ def merge_triage(
                 final_label=r.predicted_label,
                 source="tier2_classifier",
                 confidence=r.confidence,
+                baby_trend_flag=flags.get(r.baby_id, False),
             ))
 
     # Expert-reviewed traces
@@ -99,6 +117,7 @@ def merge_triage(
             final_label=r.expert_label,
             source="expert_review",
             confidence=r.expert_confidence,
+            baby_trend_flag=flags.get(r.baby_id, False),
         ))
 
     return final
@@ -127,8 +146,8 @@ def compute_coverage(
 
 
 def run_pipeline(
-    n_babies: int = 100,
-    nights_per_baby: int = 3,
+    n_babies: int = DEFAULT_N_BABIES,
+    nights_per_baby: int = DEFAULT_NIGHTS_PER_BABY,
     seed: int = 42,
     use_llm: bool = False,
     llm_sample_size: int = 15,
@@ -167,7 +186,24 @@ def run_pipeline(
     candidate_rules, tree = run_pattern_mining(all_df)
 
     # Phase 4: Tier 2 classifier + expert queue
+    # LEARNINGS #16 redux: with new 25x16 cohort + condition metadata, surface
+    # the tier1 auto-label class distribution so stratify-too-small fails
+    # loudly (not silently). Emergency is merged into urgent inside train_tier2
+    # before stratify, so we mirror that view here.
     print("[Phase 4] Training Tier 2 classifier...")
+    auto_labels = [
+        ("urgent" if r.label == "emergency" else r.label)
+        for r in tier1_results
+        if r.auto_labeled
+    ]
+    class_dist = Counter(auto_labels)
+    print(f"  Tier 1 auto-label classes (post emergency->urgent merge): "
+          f"{dict(class_dist)}")
+    small_classes = {c: n for c, n in class_dist.items() if n < 2}
+    if small_classes:
+        print(f"  [WARN] LEARNINGS #16 redux: classes with <2 examples = "
+              f"{small_classes}. Tier 2 stratified split may fail; "
+              f"consider further merging or non-stratified split.")
     clf, le, metrics = train_tier2(tier1_results, traces)
 
     print(f"\n[Phase 4] Predicting on {len(unlabeled_traces)} unlabeled traces...")
@@ -182,8 +218,18 @@ def run_pipeline(
     print(f"\n[Phase 4] Processing {len(expert_traces)} traces in expert queue...")
     expert_results = run_expert_queue(expert_traces, tier2_results, seed=seed)
 
+    # Phase 4c: Trend tier — baby-level SatSeconds-EWMA flagging.
+    # Parallel to the per-night triage; does NOT alter any per-night labels.
+    print("\n[Phase 4c] Running trend tier...")
+    trend_records = run_trend_tier(traces, tier1_results)
+    baby_trend_flags = {bid: r.flagged for bid, r in trend_records.items()}
+    n_flagged = sum(1 for v in baby_trend_flags.values() if v)
+    print(f"  Babies flagged: {n_flagged}/{len(trend_records)}")
+
     # Merge and compute coverage
-    final_triage = merge_triage(tier1_results, tier2_results, expert_results)
+    final_triage = merge_triage(
+        tier1_results, tier2_results, expert_results, baby_trend_flags
+    )
     coverage = compute_coverage(tier1_results, tier2_results, expert_results, len(traces))
 
     # Final summary
@@ -228,6 +274,7 @@ def run_pipeline(
             trace, label, classified_by=source,
             use_llm=use_llm, model=model,
             rule_events=tier1_events_map.get(trace.night_id),
+            baby_trend_flag=baby_trend_flags.get(trace.baby.baby_id, False),
         )
     print(f"  Generated {len(handoffs)} handoffs")
 
@@ -281,6 +328,7 @@ def run_pipeline(
         coverage=coverage,
         candidate_rules=candidate_rules,
         final_triage=final_triage,
+        trend_records=trend_records,
         tree=tree,
     )
 

@@ -8,10 +8,17 @@ All LLM calls in the pipeline go through this module to enforce:
 """
 from __future__ import annotations
 
+import os
 import time
 from dataclasses import dataclass, field
 
 from src.config import ANTHROPIC_API_KEY, CLAUDE_MODEL
+
+
+# Sentinel for detecting explicit-vs-default args to reset_tracker. Using the
+# bare `object()` instance (not None / -1) so callers can't trip the sentinel
+# by accident.
+_UNSET = object()
 
 
 # Approximate cost per 1K tokens (input/output) as of April 2026
@@ -29,7 +36,13 @@ ESTIMATED_TOKENS = {
 
 @dataclass
 class CostTracker:
-    """Tracks API usage and enforces spending limits."""
+    """Tracks API usage and enforces spending limits.
+
+    `is_explicit` flips True only when the caller explicitly sized the budget
+    via reset_tracker(max_calls=..., max_spend_usd=...) — both args required.
+    Default-constructed trackers leave it False so STRICT_LIVE can refuse
+    live calls that haven't been budgeted on purpose.
+    """
     max_calls: int = 20
     max_spend_usd: float = 1.00
     calls_made: int = 0
@@ -37,6 +50,7 @@ class CostTracker:
     actual_input_tokens: int = 0
     actual_output_tokens: int = 0
     model: str = ""
+    is_explicit: bool = False
 
     def estimate_run_cost(self, n_handoffs: int, n_evals: int, model: str) -> float:
         """Estimate cost before making any calls."""
@@ -90,9 +104,21 @@ def get_tracker() -> CostTracker:
     return _tracker
 
 
-def reset_tracker(max_calls: int = 20, max_spend_usd: float = 1.00):
+def reset_tracker(max_calls=_UNSET, max_spend_usd=_UNSET):
+    """Reset the global cost tracker.
+
+    `is_explicit=True` only when BOTH `max_calls` and `max_spend_usd` are
+    passed by the caller (sentinel `_UNSET` defaults detect this). Default
+    invocation `reset_tracker()` leaves `is_explicit=False`, which causes
+    STRICT_LIVE mode to refuse live calls.
+    """
     global _tracker
-    _tracker = CostTracker(max_calls=max_calls, max_spend_usd=max_spend_usd)
+    is_explicit = (max_calls is not _UNSET) and (max_spend_usd is not _UNSET)
+    _tracker = CostTracker(
+        max_calls=20 if max_calls is _UNSET else max_calls,
+        max_spend_usd=1.00 if max_spend_usd is _UNSET else max_spend_usd,
+        is_explicit=is_explicit,
+    )
 
 
 def get_client():
@@ -117,8 +143,22 @@ def call_llm(
 
     Returns {"text": str, "input_tokens": int, "output_tokens": int, "latency_ms": int}
     or None if budget exceeded or no client available.
+
+    When `STRICT_LIVE` env var is set, the tracker must have been explicitly
+    budgeted via `reset_tracker(max_calls=..., max_spend_usd=...)`. Calls
+    without an explicit budget raise RuntimeError to prevent accidental
+    spending — e.g. an import-time orchestrator call slipping through to
+    production cost.
     """
     tracker = get_tracker()
+
+    if os.environ.get("STRICT_LIVE") and not tracker.is_explicit:
+        raise RuntimeError(
+            "STRICT_LIVE is set but the cost tracker has no explicit budget. "
+            "Call reset_tracker(max_calls=N, max_spend_usd=X) with BOTH "
+            "arguments before invoking call_llm()."
+        )
+
     if not tracker.check_budget():
         return None
 

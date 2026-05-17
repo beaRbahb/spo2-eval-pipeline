@@ -1,7 +1,7 @@
 """Export pipeline results to static JSON for the React dashboard.
 
-Runs the full pipeline (100 babies, 3 nights) and writes pre-computed
-results to data/export/. No API calls, ~5s.
+Runs the full pipeline (25 babies x 16 nights = 400 traces) and writes
+pre-computed results to data/export/. No API calls.
 
 Usage:
     cd spo2-eval-pipeline
@@ -16,6 +16,8 @@ import json
 import sys
 import time
 from collections import Counter
+from dataclasses import asdict
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -29,6 +31,7 @@ from src.data_gen.synthetic import NightTrace, generate_dataset
 from src.rules.tier1_engine import run_tier1, apply_rules
 from src.patterns.feature_eng import build_feature_matrix
 from src.patterns.miner import run_pattern_mining, FEATURE_COLS
+from src.patterns.trend_features import run_trend_tier
 from src.classifier.tier2 import train_tier2, predict_tier2
 from src.classifier.expert_sim import run_expert_queue
 from src.handoff.generator import generate_handoff
@@ -42,10 +45,11 @@ from src.evals.artifact_handling import evaluate_artifact_handling
 # Config
 # ---------------------------------------------------------------------------
 
-N_BABIES = 100
-NIGHTS = 3
+N_BABIES = 25
+NIGHTS = 16
 DOWNSAMPLE_STEP = 30  # 30s intervals → 960 points per 8h trace
 EXPORT_DIR = PROJECT_ROOT / "data" / "export"
+TREND_SCHEMA_VERSION = 1
 
 
 def parse_args():
@@ -98,12 +102,20 @@ def run_pipeline(seed: int):
         final_sources[r.trace_id] = "expert_review"
         final_confidence[r.trace_id] = r.expert_confidence
 
+    # Phase 4c: Trend tier (baby-level multi-night signal).
+    print("Phase 4c: Trend tier...")
+    trend_records = run_trend_tier(traces, tier1_results)
+    baby_trend_flags = {bid: r.flagged for bid, r in trend_records.items()}
+
     # Generate mock handoffs
     print("Phase 6: Generating handoffs...")
     handoffs_map = {}
     for trace in traces:
         label = final_labels.get(trace.night_id, "normal")
-        handoffs_map[trace.night_id] = generate_handoff(trace, label, use_llm=False)
+        handoffs_map[trace.night_id] = generate_handoff(
+            trace, label, use_llm=False,
+            baby_trend_flag=baby_trend_flags.get(trace.baby.baby_id, False),
+        )
 
     # Run mock evals
     print("Phase 5: Running evaluators...")
@@ -130,6 +142,8 @@ def run_pipeline(seed: int):
         "final_confidence": final_confidence,
         "handoffs_map": handoffs_map,
         "eval_results": eval_results,
+        "trend_records": trend_records,
+        "baby_trend_flags": baby_trend_flags,
     }
 
 
@@ -188,11 +202,12 @@ def export_pipeline_summary(data: dict) -> dict:
 
 
 def export_traces_meta(data: dict) -> list[dict]:
-    """Export metadata for all 300 traces."""
+    """Export per-trace metadata for the React dashboard (one record per night)."""
     traces = data["traces"]
     final_labels = data["final_labels"]
     final_sources = data["final_sources"]
     final_confidence = data["final_confidence"]
+    baby_trend_flags = data["baby_trend_flags"]
 
     records = []
     for t in traces:
@@ -208,12 +223,15 @@ def export_traces_meta(data: dict) -> list[dict]:
                 "known_conditions": t.baby.known_conditions,
                 "spo2_baseline": round(t.baby.spo2_baseline, 1),
                 "spo2_variability": round(t.baby.spo2_variability, 2),
+                "condition": t.baby.condition,
+                "seeded_deteriorating": t.baby.seeded_deteriorating,
             },
             "night_number": t.night_number,
             "ground_truth_label": t.ground_truth_label,
             "final_label": final_labels.get(t.night_id, "unknown"),
             "source": final_sources.get(t.night_id, "unknown"),
             "confidence": round(final_confidence.get(t.night_id, 0.0), 3),
+            "baby_trend_flag": baby_trend_flags.get(t.baby.baby_id, False),
             "stats": {
                 "mean_spo2": round(float(np.mean(spo2)), 1),
                 "min_spo2": round(float(np.min(spo2)), 1),
@@ -222,6 +240,38 @@ def export_traces_meta(data: dict) -> list[dict]:
             },
         })
     return records
+
+
+def export_trend_features(data: dict) -> dict:
+    """Export the trend tier records (one entry per baby_id).
+
+    Locked JSON shape per SPEC-v3 PY-3:
+      {
+        "schema_version": 1,
+        "generated_at": "<ISO8601>",
+        "babies": { "<baby_id>": { ...BabyTrendRecord fields... } }
+      }
+
+    Every React consumer (RX-11 Trends.tsx, RX-12 TraceExplorer chip,
+    RX-13 CoverageFunnel slice) joins on `baby_id`. Floats are rounded for
+    bundle size but the underlying scalars stay floats.
+    """
+    trend_records = data["trend_records"]
+    babies = {}
+    for bid, rec in trend_records.items():
+        d = asdict(rec)
+        d["sat_seconds_series"] = [round(v, 1) for v in d["sat_seconds_series"]]
+        d["ewma_series"] = [round(v, 2) for v in d["ewma_series"]]
+        d["trend_score"] = round(d["trend_score"], 2)
+        if d["baseline_sat_seconds"] is not None:
+            d["baseline_sat_seconds"] = round(d["baseline_sat_seconds"], 2)
+        babies[bid] = d
+
+    return {
+        "schema_version": TREND_SCHEMA_VERSION,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "babies": babies,
+    }
 
 
 def export_coverage_breakdown(data: dict) -> dict:
@@ -519,9 +569,15 @@ def export_hl7_messages(data: dict) -> dict:
 
 
 def export_waveforms(data: dict, waveforms_dir: Path):
-    """Export downsampled waveforms as individual trace files."""
+    """Export downsampled waveforms as individual trace files.
+
+    Trace night_ids are randomized per run, so prior-run files would
+    accumulate. Clean the directory before writing the new cohort.
+    """
     traces = data["traces"]
     waveforms_dir.mkdir(parents=True, exist_ok=True)
+    for old in waveforms_dir.glob("*.json"):
+        old.unlink()
 
     for trace in traces:
         spo2 = trace.spo2[::DOWNSAMPLE_STEP]
@@ -578,6 +634,7 @@ def main():
     write_json(EXPORT_DIR / "eval-scores.json", export_eval_scores(data))
     write_json(EXPORT_DIR / "handoffs-samples.json", export_handoffs_samples(data))
     write_json(EXPORT_DIR / "hl7-messages.json", export_hl7_messages(data))
+    write_json(EXPORT_DIR / "trend-features.json", export_trend_features(data))
 
     print("\nExporting waveforms (individual trace files)...")
     waveforms_dir = EXPORT_DIR / "waveforms"

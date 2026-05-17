@@ -111,6 +111,21 @@ ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 CLAUDE_MODEL = "claude-sonnet-4-6"
 
 # -- Dataset Defaults --
-DEFAULT_N_BABIES = 100
-DEFAULT_NIGHTS_PER_BABY = 3
+DEFAULT_N_BABIES = 25
+DEFAULT_NIGHTS_PER_BABY = 16
 DEFAULT_SEED = 42
+
+# -- Condition Distribution (cohort metadata only — does NOT modulate signal) --
+# Three neonatal conditions tracked as BabyProfile metadata for handoff context
+# and trend-tier reporting. Target counts for the default 25-baby cohort:
+# 10 AOP / 8 BPD / 7 CHD interstage. Generator enforces minimum 1 of each class.
+CONDITIONS = ("AOP", "BPD", "CHD_interstage")
+CONDITION_TARGET_COUNTS_N25 = {"AOP": 10, "BPD": 8, "CHD_interstage": 7}
+
+# -- Seeded-Deteriorating Cohort (PY-2: trend-tier ground truth) --
+# First N_SEEDED_DETERIORATING babies (by cohort index, deterministic — no RNG)
+# get a night-index pattern trajectory that produces a positive SatSeconds slope.
+# Remaining babies get a narrowed per-night distribution with urgent suppressed
+# so SatSeconds stays flat. PY-4 canonical tests assert 80/20 sensitivity/FPR
+# against this ground truth.
+N_SEEDED_DETERIORATING = 10
