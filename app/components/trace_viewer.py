@@ -25,9 +25,15 @@ def plot_trace(
         show_accel: whether to show accelerometer on secondary y-axis
         title: custom title (auto-generated if None)
     """
-    spo2 = trace.spo2
-    n = len(spo2)
-    hours = np.arange(n) / 3600.0  # convert seconds to hours
+    spo2_raw = trace.spo2
+    n = len(spo2_raw)
+    hours_raw = np.arange(n) / 3600.0  # convert seconds to hours
+
+    # Downsample to every 30 seconds for cleaner visualization
+    step = 30
+    spo2 = spo2_raw[::step]
+    hours = hours_raw[::step]
+    accel = trace.accel_magnitude[::step] if show_accel else None
 
     if title is None:
         baby = trace.baby
@@ -47,7 +53,7 @@ def plot_trace(
         x=hours, y=spo2,
         mode="lines",
         name="SpO2",
-        line=dict(color=TEAL_PRIMARY, width=1.2),
+        line=dict(color=TEAL_PRIMARY, width=1.5),
     ))
 
     # Shade urgent regions (SpO2 < 90%)
@@ -69,36 +75,49 @@ def plot_trace(
             line=dict(color=AMBER, width=1.5),
         ))
 
-    # Threshold lines
+    # Threshold lines — stagger annotation positions to avoid overlap
     fig.add_hline(y=90, line_dash="dash", line_color=URGENT_RED,
-                  annotation_text="90% urgent", annotation_position="top left")
+                  annotation_text="90% urgent",
+                  annotation_position="bottom right",
+                  annotation_font=dict(size=11, color=URGENT_RED))
     fig.add_hline(y=94, line_dash="dash", line_color=AMBER,
-                  annotation_text="94% borderline", annotation_position="top left")
+                  annotation_text="94% borderline",
+                  annotation_position="bottom left",
+                  annotation_font=dict(size=11, color=AMBER))
     fig.add_hline(y=95, line_dash="dot", line_color=TEAL_LIGHT,
-                  annotation_text="95% normal", annotation_position="top left")
+                  annotation_text="95% normal",
+                  annotation_position="top right",
+                  annotation_font=dict(size=11, color=TEAL_LIGHT))
 
     # Accelerometer on secondary y-axis
-    if show_accel:
+    if show_accel and accel is not None:
         fig.add_trace(go.Scatter(
-            x=hours, y=trace.accel_magnitude,
+            x=hours, y=accel,
             mode="lines", name="Accel (g)",
             line=dict(color=TEAL_DARK, width=0.5),
             opacity=0.3,
         ), secondary_y=True)
-        fig.update_yaxes(title_text="Accelerometer (g)", secondary_y=True)
+        fig.update_yaxes(
+            title_text="Accelerometer (g)", secondary_y=True,
+            title_font=dict(size=12),
+            tickfont=dict(size=11),
+        )
 
     fig.update_layout(
         title=dict(text=title, font=dict(color=TEAL_DARK, size=14,
                    family=FONT_HEADING)),
         xaxis_title="Hours into night",
         yaxis_title="SpO2 (%)",
-        yaxis=dict(range=[60, 102], gridcolor=BORDER),
-        xaxis=dict(gridcolor=BORDER),
+        yaxis=dict(range=[60, 102], gridcolor=BORDER,
+                   title_font=dict(size=13), tickfont=dict(size=11)),
+        xaxis=dict(gridcolor=BORDER, dtick=1,
+                   title_font=dict(size=13), tickfont=dict(size=11)),
         height=400,
-        font=dict(family=FONT_BODY, color=TEAL_DARK),
+        font=dict(family=FONT_BODY, color=TEAL_DARK, size=12),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor=WARM_WHITE,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02,
+                    font=dict(size=11)),
     )
 
     return fig
