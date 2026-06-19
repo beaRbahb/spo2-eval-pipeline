@@ -62,3 +62,9 @@ tornado==6.5.5
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 urllib3==2.6.3
+
+# -- Observability (Rung 1: Phoenix tracing) --
+# Top-level deps only; run `pip install -r requirements.txt` then
+# `pip freeze > requirements.txt` to capture transitive pins.
+arize-phoenix
+openinference-instrumentation-anthropic

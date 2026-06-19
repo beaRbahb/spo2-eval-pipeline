@@ -92,6 +92,11 @@ Live handoff quality regressed 90% → 30% and clinical accuracy dropped 80% →
 - [ ] Thread rule_events through evaluators (clinical_accuracy, artifact_handling)
 - [ ] Update interview talk track with v2 clinical review story
 
+### Phase A test debt (from SPEC-v3 code review — defer to next Python session, ~60 min)
+- [ ] `tests/test_handoff_trend.py` — cover the `[TREND]` block in handoff generator (emergency/urgent/monitor/routine/artifact templates + STRICT_LIVE guard paths)
+- [ ] `tests/test_llm_utils.py` — cover STRICT_LIVE guard behavior in llm_utils (raises on missing key, falls back when guard off)
+- Why deferred: Phase B (React landings) is on the critical path and parallelizable now that `trend-features.json` schema is locked. Land these before Gate D.
+
 ## How To Run
 ```bash
 cd ~/spo2-eval-pipeline

@@ -167,6 +167,12 @@ def run_pipeline(
         max_calls = llm_sample_size * 4 + 10  # handoffs + 3 evals per trace + buffer
         reset_tracker(max_calls=max_calls, max_spend_usd=1.00)
 
+    # Phoenix tracing — no-op unless PHOENIX_TRACING=1. Auto-instruments the
+    # anthropic client, so handoff + eval calls become spans with no call-site
+    # changes. See src/observability.py.
+    from src.observability import setup_tracing
+    setup_tracing()
+
     print("=" * 60)
     print(f"SpO2 AI Eval Pipeline — {'LIVE MODE' if use_llm else 'MOCK MODE'}")
     print("=" * 60)
@@ -265,17 +271,28 @@ def run_pipeline(
     # Build map of rule engine detected events per trace (more accurate than
     # synthetic generator events in trace.events)
     tier1_events_map = {r.trace_id: r.events_detected for r in tier1_results}
+    from src.observability import trace_span
     handoffs = {}
     trace_subset = traces[:llm_sample_size] if use_llm else traces
     for trace in trace_subset:
         label = final_label_map.get(trace.night_id, trace.ground_truth_label)
         source = final_source_map.get(trace.night_id, "pipeline")
-        handoffs[trace.night_id] = generate_handoff(
-            trace, label, classified_by=source,
-            use_llm=use_llm, model=model,
-            rule_events=tier1_events_map.get(trace.night_id),
-            baby_trend_flag=baby_trend_flags.get(trace.baby.baby_id, False),
-        )
+        # Wrap the handoff LLM call so its span is named + tagged. The
+        # auto-instrumented messages.create nests under this span.
+        with trace_span(
+            "handoff.generate",
+            step="handoff",
+            night_id=trace.night_id,
+            baby_id=trace.baby.baby_id,
+            ground_truth=trace.ground_truth_label,
+            final_label=label,
+        ):
+            handoffs[trace.night_id] = generate_handoff(
+                trace, label, classified_by=source,
+                use_llm=use_llm, model=model,
+                rule_events=tier1_events_map.get(trace.night_id),
+                baby_trend_flag=baby_trend_flags.get(trace.baby.baby_id, False),
+            )
     print(f"  Generated {len(handoffs)} handoffs")
 
     # Phase 5: LLM evals
@@ -291,16 +308,31 @@ def run_pipeline(
         label = final_label_map.get(trace.night_id, trace.ground_truth_label)
         s = int(eval_rng.integers(0, 2**31))
 
-        eval_results.append(evaluate_clinical_accuracy(
-            trace, label, use_llm=use_llm, model=model, seed=s))
+        # Parent span per night: groups all 3 evaluators into one trace tree.
+        # Common attributes (night/baby/labels) live here so every child
+        # inherits the clinical context.
+        common = dict(
+            night_id=trace.night_id,
+            baby_id=trace.baby.baby_id,
+            ground_truth=trace.ground_truth_label,
+            final_label=label,
+        )
+        with trace_span("trace.evaluate", **common):
+            # Each evaluator gets its own named, filterable span. The
+            # auto-instrumented messages.create nests under it.
+            with trace_span("eval.clinical_accuracy", evaluator="clinical_accuracy", **common):
+                eval_results.append(evaluate_clinical_accuracy(
+                    trace, label, use_llm=use_llm, model=model, seed=s))
 
-        handoff = handoffs.get(trace.night_id)
-        if handoff:
-            eval_results.append(evaluate_handoff_quality(
-                trace, handoff, label, use_llm=use_llm, model=model, seed=s+1))
+            handoff = handoffs.get(trace.night_id)
+            if handoff:
+                with trace_span("eval.handoff_quality", evaluator="handoff_quality", **common):
+                    eval_results.append(evaluate_handoff_quality(
+                        trace, handoff, label, use_llm=use_llm, model=model, seed=s+1))
 
-        eval_results.append(evaluate_artifact_handling(
-            trace, label, use_llm=use_llm, model=model, seed=s+2))
+            with trace_span("eval.artifact_handling", evaluator="artifact_handling", **common):
+                eval_results.append(evaluate_artifact_handling(
+                    trace, label, use_llm=use_llm, model=model, seed=s+2))
 
     # Eval summary
     from collections import Counter as Ctr
